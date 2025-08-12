@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  PY_COLORS: 1
+  UV_VERSION: 0.8.10
+
+jobs:
+  ci:
+    runs-on: "${{ matrix.platform }}-latest"
+    strategy:
+      fail-fast: false
+      # https://blog.jaraco.com/efficient-use-of-ci-resources/
+      matrix:
+        python: ["3.9", "3.13"]
+        platform: ["ubuntu", "macos", "windows"]
+        include:
+        - python: "3.10"
+          platform: "ubuntu"
+        - python: "3.11"
+          platform: "ubuntu"
+        - python: "3.12"
+          platform: "ubuntu"
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+    steps:
+    - uses: actions/checkout@v5
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: ${{ env.UV_VERSION }}
+    - name: Environment
+      run: uv sync
+    - name: ruff
+      if: always()
+      run: |
+        uv run ruff check
+        uv run ruff format --check
+    - name: taplo (TOML formatting)
+      run: uv run taplo fmt --check pyproject.toml
+      if: ${{ matrix.platform == 'ubuntu' }}
+    - name: pytest
+      run: uv run pytest
+    - name: pyright
+      if: always()
+      run: uv run pyright src

@@ -1,0 +1,35 @@
+[project]
+name = "monalisten"
+version = "0.1.0"
+description = "Monalisten is an async library for handling GitHub webhook events in an easy way"
+readme = "README.md"
+authors = [{ name = "trag1c", email = "dev@jakubr.me" }]
+requires-python = ">=3.9"
+dependencies = ["githubkit~=0.13", "httpx>=0.28.1", "httpx-sse>=0.4.1"]
+
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+  "aiohttp>=3.12.15",
+  "pyright>=1.1.403",
+  "pytest>=8.4.1",
+  "pytest-asyncio>=1.1.0",
+  "ruff>=0.12.8",
+  "taplo>=0.9.3",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["COM", "D", "S", "PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["FBT", "T201", "SLF001"]
