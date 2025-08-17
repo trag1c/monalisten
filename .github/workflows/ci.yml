@@ -9,6 +9,8 @@ on:
 env:
   PY_COLORS: 1
   UV_VERSION: 0.8.10
+  UV_LOCKED: 1
+  UV_NO_SYNC: 1
 
 jobs:
   ci:
@@ -29,23 +31,26 @@ jobs:
     env:
       UV_PYTHON: ${{ matrix.python }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
     - name: Setup uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1  # v6.5.0
       with:
         version: ${{ env.UV_VERSION }}
     - name: Environment
+      id: sync
       run: uv sync
-    - name: ruff
-      if: always()
-      run: |
-        uv run ruff check
-        uv run ruff format --check
     - name: taplo (TOML formatting)
-      run: uv run taplo fmt --check pyproject.toml
-      if: ${{ matrix.platform == 'ubuntu' }}
+      if: ${{ !cancelled() && steps.sync.conclusion == 'success' && matrix.platform == 'ubuntu' }}
+      run: uv run taplo fmt --check --diff pyproject.toml
+    - name: ruff format
+      if: ${{ !cancelled() && steps.sync.conclusion == 'success' }}
+      run: uv run ruff format --diff --preview
+    - name: ruff lint
+      if: ${{ !cancelled() && steps.sync.conclusion == 'success' }}
+      run: uv run ruff check --output-format github
     - name: pytest
-      run: uv run pytest
+      if: ${{ !cancelled() && steps.sync.conclusion == 'success' }}
+      run: uv run pytest -vv
     - name: pyright
-      if: always()
+      if: ${{ !cancelled() && steps.sync.conclusion == 'success' }}
       run: uv run pyright src
