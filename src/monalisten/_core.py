@@ -87,9 +87,8 @@ class Monalisten:
         return {k.casefold(): v for k, v in event.json().items()}
 
     async def _handle_event(self, event: ServerSentEvent) -> None:
-        if event.data == "{}":
+        if not (event_data := self._prepare_event_data(event)):
             return
-        event_data = self._prepare_event_data(event)
 
         if not self._passes_auth(event_data):
             return
