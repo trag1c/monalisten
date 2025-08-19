@@ -36,4 +36,6 @@ select = ["ALL"]
 ignore = ["COM", "D", "S", "PLR2004"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/monalisten/__init__.py" = ["E402"]
+"src/monalisten/types.py" = ["TC004"]
 "tests/*" = ["FBT", "T201", "SLF001"]
