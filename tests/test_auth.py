@@ -47,6 +47,7 @@ async def test_no_token(sse_server: tuple[ServerQueue, str]) -> None:
             False,
         ),
         ({SIG_HEADER: sign_auth_event("foobar")}, nullcontext(), True),
+        ({SIG_HEADER.title(): sign_auth_event("foobar")}, nullcontext(), True),
     ],
 )
 @pytest.mark.asyncio

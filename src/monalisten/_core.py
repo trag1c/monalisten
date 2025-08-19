@@ -83,19 +83,22 @@ class Monalisten:
 
         return wrapper
 
+    def _prepare_event_data(self, event: ServerSentEvent) -> dict[str, Any]:
+        return {k.casefold(): v for k, v in event.json().items()}
+
     async def _handle_event(self, event: ServerSentEvent) -> None:
         if event.data == "{}":
             return
-        data = event.json()
+        event_data = self._prepare_event_data(event)
 
-        if not self._passes_auth(data):
+        if not self._passes_auth(event_data):
             return
 
-        if not (event_name := data.get(EVENT_HEADER)):
+        if not (event_name := event_data.get(EVENT_HEADER)):
             msg = f"received data is missing the {EVENT_HEADER} header"
             raise MonalistenError(msg)
 
-        if not (body := data.get("body")):
+        if not (body := event_data.get("body")):
             msg = "received data doesn't contain a body"
             raise MonalistenError(msg)
 

@@ -68,12 +68,12 @@ DUMMY_REPO = Repository(
 ).model_dump(mode="json", exclude_unset=True)  # fmt: skip
 
 DUMMY_AUTH_EVENT = {
-    "x-github-event": "github_app_authorization",
+    "X-GitHub-Event": "github_app_authorization",
     "body": {"action": "revoked", "sender": DUMMY_USER},
 }
 
 DUMMY_STAR_EVENT = {
-    "x-github-event": "star",
+    "X-GitHub-Event": "star",
     "body": {
         "action": "created",
         "repository": DUMMY_REPO,
