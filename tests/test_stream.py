@@ -33,3 +33,16 @@ async def test_core_streaming(sse_server: tuple[ServerQueue, str]) -> None:
     assert all(e.event == "message" for e in received_events)
     assert received_events[0].data == "{}"
     assert received_events[1].data == '{"foo":"bar"}'
+
+
+@pytest.mark.parametrize("event_data", ["{}", "{ }"])
+@pytest.mark.asyncio
+async def test_ignore_no_data(
+    sse_server: tuple[ServerQueue, str], event_data: str
+) -> None:
+    queue, url = sse_server
+    await queue._queue.put(event_data)
+    await queue.end_signal()
+
+    client = Monalisten(url)
+    await client.listen()
