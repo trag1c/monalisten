@@ -4,6 +4,6 @@ lm.LAZY_MODULES = (*lm.LAZY_MODULES, r"^monalisten\.types$")
 lm.apply()
 
 from . import types
-from ._core import Monalisten
+from ._core import Monalisten, MonalistenError
 
-__all__ = ("Monalisten", "types")
+__all__ = ("Monalisten", "MonalistenError", "types")

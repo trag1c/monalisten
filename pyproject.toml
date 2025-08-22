@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "monalisten"
-version = "0.1.1"
+version = "0.2.0"
 description = "Monalisten is an async library for handling GitHub webhook events in an easy way"
 readme = "README.md"
 license = "MIT"

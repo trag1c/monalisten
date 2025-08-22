@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from monalisten import Monalisten, types
+from monalisten import Monalisten, MonalistenError, types
 from tests.ghk_utils import DUMMY_AUTH_EVENT, DUMMY_STAR_EVENT
 
 if TYPE_CHECKING:
@@ -97,3 +97,11 @@ async def test_wildcard_hook(sse_server: tuple[ServerQueue, str]) -> None:
     await client.listen()
 
     assert trigger_count == 4
+
+
+def test_invalid_event_name() -> None:
+    with pytest.raises(MonalistenError, match="Invalid event name: 'bobr'"):
+
+        @Monalisten("").on("bobr")  # pyright: ignore [reportArgumentType]
+        async def _(_: types.WebhookEvent) -> None:
+            pass
