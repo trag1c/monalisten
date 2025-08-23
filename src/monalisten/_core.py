@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
+from enum import Enum
 from itertools import chain
 from typing import (
     TYPE_CHECKING,
@@ -36,11 +37,8 @@ if TYPE_CHECKING:
     HookWrapper: TypeAlias = Callable[[T], T]
 
     MetaReadyHook: TypeAlias = Hook[[]]
-    MetaAuthIssueHook: TypeAlias = Hook[[dict[str, Any], str]]
+    MetaAuthIssueHook: TypeAlias = "Hook[[AuthIssue, dict[str, Any]]]"
     MetaErrorHook: TypeAlias = "Hook[[dict[str, Any], str, list[ErrorDetails] | None]]"
-
-MetaEventName: TypeAlias = Literal["ready", "auth_issue", "error"]
-VALID_META_EVENT_NAMES = frozenset(get_args(MetaEventName))
 
 
 class MetaHooks(TypedDict):
@@ -49,8 +47,20 @@ class MetaHooks(TypedDict):
     error: list[MetaErrorHook]
 
 
+MetaEventName: TypeAlias = Literal["ready", "auth_issue", "error"]
+VALID_META_EVENT_NAMES = frozenset(get_args(MetaEventName))
+
 EVENT_HEADER = "x-github-event"
 SIG_HEADER = "x-hub-signature-256"
+
+
+class AuthIssue(Enum):
+    MISSING = "missing"
+    """Client has set token, but no signature was received"""
+    UNEXPECTED = "unexpected"
+    """Client has no set token, but a signature was received"""
+    MISMATCH = "mismatch"
+    """Client's token couldn't verify received signature"""
 
 
 class MonalistenError(Exception):
@@ -80,27 +90,23 @@ class Monalisten:
     async def _passes_auth(self, event_data: dict[str, Any]) -> bool:
         if not self._token:
             if SIG_HEADER in event_data:
-                await self._report_auth_issue(
-                    event_data, f"Received {SIG_HEADER} header, but no token was set"
-                )
+                await self._report_auth_issue(AuthIssue.UNEXPECTED, event_data)
             return True
 
         if not (signature := event_data.get(SIG_HEADER)):
-            await self._report_auth_issue(event_data, f"Missing {SIG_HEADER} header")
+            await self._report_auth_issue(AuthIssue.MISSING, event_data)
             return False
 
         if webhooks.verify(self._token, event_data["body"], signature):
             return True
 
-        await self._report_auth_issue(
-            event_data, f"{SIG_HEADER} header does not match set token"
-        )
+        await self._report_auth_issue(AuthIssue.MISMATCH, event_data)
         return False
 
     async def _report_auth_issue(
-        self, event_data: dict[str, Any], message: str
+        self, issue_kind: AuthIssue, event_data: dict[str, Any]
     ) -> None:
-        await dispatch_hooks(self._meta_hooks.get("auth_issue"), event_data, message)
+        await dispatch_hooks(self._meta_hooks.get("auth_issue"), issue_kind, event_data)
 
     async def _raise(
         self,

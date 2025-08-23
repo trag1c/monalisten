@@ -163,18 +163,20 @@ async def on_ready() -> None:
 
 During its authentication step, Monalisten can report issues for unexpected
 state. Reading those requires defining an auth issue hook. The expected hook
-signature is `async (dict[str, Any], str) -> None`.
+signature is `async (AuthIssue, dict[str, Any]) -> None`.
 
 ```py
 import json
 from pathlib import Path
 
+from monalisten import AuthIssue
+
 saved_events_dir = Path("/path/to/logs")
 
 @client.on_internal("auth_issue")
-async def log_and_save(event_data: dict[str, Any], message: str) -> None:
+async def log_and_save(issue: AuthIssue, event_data: dict[str, Any]) -> None:
     event_guid = event_data.get("x-github-delivery", "missing-guid")
-    print(f"Auth issue in event {event_data}: {message}")
+    print(f"Auth issue in event {event_data}: token {issue.value}")
     (saved_events_dir / f"{event_guid}.json").write_text(json.dumps(event_data))
 ```
 
@@ -226,6 +228,26 @@ async def print_error_summary(
 
 
 ### API reference
+
+#### `AuthIssue`
+
+```py
+class AuthIssue(Enum):
+    MISSING = "missing"
+    UNEXPECTED = "unexpected"
+    MISMATCH = "mismatch"
+```
+
+An enum representing authentication issues encountered by the Monalisten client,
+sent to `auth_issue` internal event hooks. The table below describes scenarios
+in which the issues occur.
+
+| Issue kind   | Client token | Received signature | Verified |
+| :---         | :---:        | :---:              | :---:    |
+| `MISSING`    | ✅           | ❌                 | —        |
+| `UNEXPECTED` | ❌           | ✅                 | —        |
+| `MISMATCH`   | ✅           | ✅                 | ❌       |
+
 
 #### `Monalisten`
 
