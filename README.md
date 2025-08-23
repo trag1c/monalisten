@@ -15,7 +15,7 @@ events received from GitHub in an easy way. It is built on top of the amazing
   - [One event, multiple hooks](#one-event-multiple-hooks)
   - [One hook, multiple events](#one-hook-multiple-events)
   - [Wildcard hooks](#wildcard-hooks)
-  - [Warnings & authentication behavior](#warnings--authentication-behavior)
+  - [Internal events](#internal-events)
   - [API reference](#api-reference)
   - [GitHub event type reference](#github-event-type-reference)
   - [`monalisten.types` reference](#monalistentypes-reference)
@@ -132,12 +132,53 @@ async def log(event: WebhookEvent) -> None:
 ```
 
 
-### Warnings & authentication behavior
+### Internal events
 
-During its authentication step, Monalisten can issue warnings for unexpected
-state if you pass `log_auth_warnings=True` when creating a client.
+Other than GitHub events, hooks can be created for handling a few internal
+events reported by Monalisten itself, such as:
+* an HTTP client is created in `.listen()` (`ready`)
+* an authentication issue arises (`auth_issue`)
+* a processing error occurs (`error`)
 
-Monalisten will issue warnings in the following cases:
+Internal event hooks are defined with the `Monalisten.on_internal` decorator.
+The internal `error` event is the only one with default behavior—it will raise
+an exception and halt the client. The other two are simply ignored if no hook is
+defined.
+
+
+#### `ready`
+
+Triggered when an internal HTTP client is created and connected to the `source`,
+right before events are streamed. The expected hook signature is
+`async () -> None`.
+
+```py
+@client.on_internal("ready")
+async def on_ready() -> None:
+    print("🚀 Monalisten is ready!")
+```
+
+
+#### `auth_issue`
+
+During its authentication step, Monalisten can report issues for unexpected
+state. Reading those requires defining an auth issue hook. The expected hook
+signature is `async (dict[str, Any], str) -> None`.
+
+```py
+import json
+from pathlib import Path
+
+saved_events_dir = Path("/path/to/logs")
+
+@client.on_internal("auth_issue")
+async def log_and_save(event_data: dict[str, Any], message: str) -> None:
+    event_guid = event_data.get("x-github-delivery", "missing-guid")
+    print(f"Auth issue in event {event_data}: {message}")
+    (saved_events_dir / f"{event_guid}.json").write_text(json.dumps(event_data))
+```
+
+Monalisten will report auth issues in the following cases:
 
 * the client sets a token, but:
   * the received event doesn't have a signature header
@@ -149,25 +190,52 @@ Monalisten will issue warnings in the following cases:
   (the event is still processed)
 
 
+#### `error`
+
+Monalisten can raise an error in two contexts:
+* during setup, when an invalid event name is used in a `.on()`/`.on_internal()`
+  call
+* during event processing, when an event payload is missing crucial fields, e.g.
+  an event type header or a body
+
+Only the errors occurring in the event processing context can have hooks set up.
+When an event is caused by an underlying Pydantic validation error, its errors
+will be passed to the hook as well. The expected hook signature is
+`async (dict[str, Any], str, list[pydantic_core.ErrorDetails] | None) -> None`.
+
+```py
+from pydantic_core import ErrorDetails
+
+@client.on_internal("error")
+async def print_error_summary(
+    event_data: dict[str, Any],
+    message: str,
+    pydantic_errors: list[ErrorDetails] | None,
+) -> None:
+    event_guid = event_data.get("x-github-delivery", "<missing-guid>")
+    print(f"Error occurred in event {event_guid}: {message}")
+
+    if not pydantic_errors:
+        return
+
+    print("Pydantic errors detected:")
+    for err in pydantic_errors:
+        print("-", err["msg"])
+        print(" ", err["loc"])
+```
+
+
 ### API reference
 
 #### `Monalisten`
 
 ```py
 class Monalisten:
-    def __init__(
-        self,
-        source: str,
-        *,
-        token: str | None = None,
-        log_auth_warnings: bool = False,
-    ) -> None: ...
+    def __init__(self, source: str, *, token: str | None = None) -> None: ...
 ```
 
 Creates a Monalisten client streaming events from `source`, optionally secured
-by the secret `token`. For details on `log_auth_warnings`, see the
-[Warnings & authentication behavior](#warnings--authentication-behavior)
-section.
+by the secret `token`.
 
 
 #### `Monalisten.listen`
@@ -184,7 +252,7 @@ Instantiates an internal HTTP client and starts streaming events from `source`.
 
 ```py
 class Monalisten:
-    def on(self, event: HookTrigger) -> Callable[[Hook[H]], Hook[H]]: ...
+    def on(self, event: HookTrigger) -> HookWrapper[Hook[[H]]]: ...
 ```
 
 Meant to be used as a decorator. Registers the decorated function as a hook for
@@ -194,6 +262,27 @@ the [wildcard hook `"*"`](#wildcard-hooks).
 
 In technical terms, this returns a function that registers the function passed
 in as a Monalisten hook.
+
+Every hook is expected to have the signature of `async (WebhookEvent) -> None`
+(narrowed down to the specific event type).
+
+
+#### `Monalisten.on_internal`
+
+```py
+class Monalisten:
+    def on_internal(self, event: MetaEventName) -> HookWrapper[Hook[...]]: ...
+```
+
+Meant to be used as a decorator. Registers the decorated function as a hook for
+the internal `event` event. Raises an error if an invalid event name is
+provided. `MetaEventName` is one of `"ready"`, `"auth_issue"`, or `"error"`.
+
+In technical terms, this returns a function that registers the function passed
+in as a Monalisten meta hook.
+
+See the [Internal events](#internal-events) section for expected hook
+signatures for each event.
 
 
 #### `MonalistenError`
@@ -220,7 +309,7 @@ rely on your LSP's autocomplete!
 
 
 ## License
-`monalisten` is licensed under the [MIT License].  
+`monalisten` is licensed under the [MIT License].
 © [trag1c], 2025
 
 

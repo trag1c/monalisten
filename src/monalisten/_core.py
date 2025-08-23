@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import asyncio
-import warnings
 from collections import defaultdict
 from itertools import chain
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypedDict,
+    TypeVar,
+    cast,
+    get_args,
+    overload,
+)
 
 import httpx
 from githubkit import webhooks
@@ -13,16 +21,34 @@ from httpx_sse import ServerSentEvent, aconnect_sse
 from pydantic import ValidationError
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    from collections.abc import Awaitable, Callable, Iterable
 
     from githubkit.versions.v2022_11_28.webhooks import EventNameType, WebhookEvent
-    from typing_extensions import TypeAlias
+    from pydantic_core import ErrorDetails
+    from typing_extensions import ParamSpec, TypeAlias
 
-H = TypeVar("H", bound="WebhookEvent")
-Hook: TypeAlias = "Callable[[H], Awaitable[None]]"
-HookTrigger: TypeAlias = 'Literal[EventNameType, "*"]'
+    P = ParamSpec("P")
+    T = TypeVar("T")
+    H = TypeVar("H", bound="WebhookEvent")
 
-GUID_HEADER = "x-github-delivery"
+    Hook: TypeAlias = Callable[P, Awaitable[None]]
+    HookTrigger: TypeAlias = Literal[EventNameType, "*"]
+    HookWrapper: TypeAlias = Callable[[T], T]
+
+    MetaReadyHook: TypeAlias = Hook[[]]
+    MetaAuthIssueHook: TypeAlias = Hook[[dict[str, Any], str]]
+    MetaErrorHook: TypeAlias = "Hook[[dict[str, Any], str, list[ErrorDetails] | None]]"
+
+MetaEventName: TypeAlias = Literal["ready", "auth_issue", "error"]
+VALID_META_EVENT_NAMES = frozenset(get_args(MetaEventName))
+
+
+class MetaHooks(TypedDict):
+    ready: list[MetaReadyHook]
+    auth_issue: list[MetaAuthIssueHook]
+    error: list[MetaErrorHook]
+
+
 EVENT_HEADER = "x-github-event"
 SIG_HEADER = "x-hub-signature-256"
 
@@ -34,50 +60,89 @@ class MonalistenError(Exception):
 class Monalisten:
     """
     A Monalisten client streaming events from `source`, optionally secured by the secret
-    `token`. For details on `log_auth_warnings`, see the "Warnings & authentication
-    behavior" section of the documentation.
+    `token`.
     """
 
-    def __init__(
-        self, source: str, *, token: str | None = None, log_auth_warnings: bool = False
-    ) -> None:
+    def __init__(self, source: str, *, token: str | None = None) -> None:
         self._source = source
         self._token = token
-        self._log = log_auth_warnings
-        self._hooks = defaultdict[HookTrigger, list[Hook]](list)
+        self._hooks: defaultdict[HookTrigger, list[Hook]] = defaultdict(list)
+        self._meta_hooks: MetaHooks = {"ready": [], "auth_issue": [], "error": []}
 
-    def _passes_auth(self, event_data: dict[str, Any]) -> bool:
+    @property
+    def source(self) -> str:
+        return self._source
+
+    @property
+    def token(self) -> str | None:
+        return self._token
+
+    async def _passes_auth(self, event_data: dict[str, Any]) -> bool:
         if not self._token:
             if SIG_HEADER in event_data:
-                self._warn(
+                await self._report_auth_issue(
                     event_data, f"Received {SIG_HEADER} header, but no token was set"
                 )
             return True
 
         if not (signature := event_data.get(SIG_HEADER)):
-            self._warn(event_data, f"Missing {SIG_HEADER} header")
+            await self._report_auth_issue(event_data, f"Missing {SIG_HEADER} header")
             return False
 
         if webhooks.verify(self._token, event_data["body"], signature):
             return True
 
-        self._warn(event_data, f"{SIG_HEADER} header does not match set token")
+        await self._report_auth_issue(
+            event_data, f"{SIG_HEADER} header does not match set token"
+        )
         return False
 
-    def _warn(self, event_data: dict[str, Any], message: str) -> None:
-        if not self._log:
-            return
-        name = event_data.get(EVENT_HEADER, "unknown")
-        guid = event_data.get(GUID_HEADER, "unknown")
-        warnings.warn(f"Event {name} ({guid}): {message}", stacklevel=3)
+    async def _report_auth_issue(
+        self, event_data: dict[str, Any], message: str
+    ) -> None:
+        await dispatch_hooks(self._meta_hooks.get("auth_issue"), event_data, message)
 
-    def on(self, event: HookTrigger) -> Callable[[Hook[H]], Hook[H]]:
+    async def _raise(
+        self,
+        event_data: dict[str, Any],
+        message: str,
+        pydantic_errors: list[ErrorDetails] | None = None,
+    ) -> None:
+        if error_hooks := self._meta_hooks.get("error"):
+            await dispatch_hooks(error_hooks, event_data, message, pydantic_errors)
+        else:
+            raise MonalistenError(message)
+
+    @overload
+    def on_internal(self, event: Literal["error"]) -> HookWrapper[MetaErrorHook]: ...
+
+    @overload
+    def on_internal(
+        self, event: Literal["auth_issue"]
+    ) -> HookWrapper[MetaAuthIssueHook]: ...
+
+    @overload
+    def on_internal(self, event: Literal["ready"]) -> HookWrapper[MetaReadyHook]: ...
+
+    def on_internal(self, event: MetaEventName) -> HookWrapper[Hook[...]]:
+        """Register the decorated function as a hook for the internal `event` event."""
+        if event not in VALID_META_EVENT_NAMES:
+            msg = f"Invalid internal event name: {event!r}"
+            raise MonalistenError(msg)
+
+        def wrapper(hook: Hook[...]) -> Hook[...]:
+            self._meta_hooks[event].append(hook)
+            return hook
+
+        return wrapper
+
+    def on(self, event: HookTrigger) -> HookWrapper[Hook[[H]]]:
         """Register the decorated function as a hook for the `event` event."""
         if event not in VALID_EVENT_NAMES and event != "*":
             msg = f"Invalid event name: {event!r}"
             raise MonalistenError(msg)
 
-        def wrapper(hook: Hook[H]) -> Hook[H]:
+        def wrapper(hook: Hook[[H]]) -> Hook[[H]]:
             self._hooks[event].append(hook)
             return hook
 
@@ -90,30 +155,35 @@ class Monalisten:
         if not (event_data := self._prepare_event_data(event)):
             return
 
-        if not self._passes_auth(event_data):
+        if not await self._passes_auth(event_data):
             return
 
         if not (event_name := event_data.get(EVENT_HEADER)):
-            msg = f"received data is missing the {EVENT_HEADER} header"
-            raise MonalistenError(msg)
+            await self._raise(
+                event_data, f"received data is missing the {EVENT_HEADER} header"
+            )
+            return
 
         if not (body := event_data.get("body")):
-            msg = "received data doesn't contain a body"
-            raise MonalistenError(msg)
+            await self._raise(event_data, "received data doesn't contain a body")
+            return
 
         try:
             webhook_event = cast("WebhookEvent", webhooks.parse_obj(event_name, body))
         except ValidationError as pydantic_exc:
-            msg = "the received payload could not be parsed as an event"
-            raise MonalistenError(msg) from pydantic_exc
-
-        coros = (
-            hook(webhook_event)
-            for hook in chain.from_iterable(
-                self._hooks.get(hook_kind, []) for hook_kind in (event_name, "*")
+            await self._raise(
+                event_data,
+                "the received payload could not be parsed as an event",
+                pydantic_exc.errors(),
             )
+            return
+
+        await dispatch_hooks(
+            chain.from_iterable(
+                self._hooks.get(hook_kind, []) for hook_kind in (event_name, "*")
+            ),
+            webhook_event,
         )
-        await asyncio.gather(*coros)
 
     async def listen(self) -> None:
         """Start an internal HTTP client and stream events from `source`."""
@@ -121,5 +191,13 @@ class Monalisten:
             httpx.AsyncClient(timeout=None) as client,
             aconnect_sse(client, "GET", self._source) as sse,
         ):
+            await dispatch_hooks(self._meta_hooks.get("ready"))
             async for event in sse.aiter_sse():
                 await self._handle_event(event)
+
+
+async def dispatch_hooks(
+    hooks: Iterable[Hook[P]] | None, *args: P.args, **kwargs: P.kwargs
+) -> None:
+    if hooks is not None:
+        await asyncio.gather(*(h(*args, **kwargs) for h in hooks))
