@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from monalisten import Monalisten, MonalistenError
+from monalisten import AuthIssue, Monalisten, MonalistenError
 from monalisten._core import EVENT_HEADER, SIG_HEADER
 from tests.ghk_utils import DUMMY_AUTH_EVENT, sign_auth_event
 
@@ -55,15 +55,15 @@ async def test_on_auth_issue(sse_server: tuple[ServerQueue, str]) -> None:
     await queue.end_signal()
 
     client = Monalisten(url, token="foobar")
-    first_words: list[str] = []
+    issue_names: list[str] = []
 
     @client.on_internal("auth_issue")
-    async def _(_: dict[str, Any], message: str) -> None:
-        first_words.append(message.split()[0])
+    async def _(issue: AuthIssue, _: dict[str, Any]) -> None:
+        issue_names.append(issue.value)
 
     await client.listen()
 
-    assert sorted(first_words) == ["Missing", SIG_HEADER]
+    assert sorted(issue_names) == ["mismatch", "missing"]
 
 
 @pytest.mark.parametrize(
