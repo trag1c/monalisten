@@ -1,0 +1,132 @@
+from __future__ import annotations
+
+import sys
+from functools import cache
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from githubkit.versions.latest.webhooks import webhook_action_types
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+EVENT_NAMES = sorted(webhook_action_types, key=len, reverse=True)
+
+SCRIPTS_DIR = Path(__file__).parent
+IMPORT_FILE_TEMPLATE = (SCRIPTS_DIR / "imports.py.template").read_text()
+(
+    BASE_CLASS,
+    ATTR_TEMPLATE,
+    EMPTY_NAMESPACE_TEMPLATE,
+    NAMESPACE_TEMPLATE,
+    REGISTRAR_TEMPLATE,
+) = (SCRIPTS_DIR / "namespaces.py.template").read_text().split("\n#-----#\n")
+
+
+def snake_to_pascal(name: str) -> str:
+    return "".join(word.capitalize() for word in name.split("_"))
+
+
+@cache
+def collect_events_and_actions() -> dict[str, list[str]]:
+    actions: dict[str, list[str]] = {}
+    for k, v in webhook_action_types.items():
+        if isinstance(v, dict):
+            actions[k] = list(v)
+            continue
+        action_name = v.__name__.casefold().removeprefix(f"webhook{k.replace('_', '')}")
+        actions[k] = [action_name] if action_name else []
+    return actions
+
+
+def indent_lines(
+    lines: Iterable[str | tuple[str, str]], template: str, indent: int
+) -> str:
+    return "\n".join(
+        " " * indent + template.format(*[line] if isinstance(line, str) else line)
+        for line in sorted(lines)
+    )
+
+
+def generate_imports() -> str:
+    event_aliases = {"WebhookEvent": "Any"}
+    action_aliases: dict[str, str] = {}
+
+    for event_, actions in collect_events_and_actions().items():
+        event = snake_to_pascal(event_)
+        event_aliases[event + "Event"] = event
+
+        # Manual special case adjustment
+        if event == "ProjectsV2":
+            event += "Project"
+
+        for action in actions:
+            name = event + snake_to_pascal(action)
+
+            # Manual special case adjustments
+            if action == "promote_to_enterprise":
+                action_aliases["Webhook" + name.replace("Promote", "Promoted")] = name
+                continue
+            if action in ("review_requested", "review_request_removed"):
+                continue
+
+            action_aliases["Webhook" + name] = name
+
+    aliases = event_aliases | action_aliases
+
+    event_alias_lines = indent_lines(event_aliases.items(), "{} as {},", 8)
+    action_alias_lines = indent_lines(action_aliases.items(), "{} as {},", 8)
+    lazy_vars = indent_lines(aliases.items(), '"{}": ("{}",),', 8)
+    all_entries = indent_lines(aliases.values(), '"{}",', 4)
+    return IMPORT_FILE_TEMPLATE.format(
+        event_aliases=event_alias_lines,
+        action_aliases=action_alias_lines,
+        lazy_vars=lazy_vars,
+        all_entries=all_entries,
+    )
+
+
+def generate_namespace(event: str, actions: list[str]) -> str:
+    event = snake_to_pascal(event)
+    if not actions:
+        return EMPTY_NAMESPACE_TEMPLATE.format(event=event)
+
+    # Stripping trailing comma to let Ruff format it better
+    actions_literal = indent_lines(actions, '"{}",', 4).removesuffix(",")
+    base = NAMESPACE_TEMPLATE.format(event=event, actions_literal=actions_literal)
+    registrars = "".join(
+        REGISTRAR_TEMPLATE.format(
+            action=action, event=event, action_pascal=snake_to_pascal(action)
+        )
+        for action in actions
+    )
+    return base + registrars
+
+
+def generate_namespaces() -> str:
+    attrs = [BASE_CLASS]
+    namespaces: list[str] = []
+    for event, actions in collect_events_and_actions().items():
+        attr = ATTR_TEMPLATE.format(event=event, event_pascal=snake_to_pascal(event))
+        attrs.append(attr)
+        namespace = generate_namespace(event, actions)
+
+        # Manual special case adjustment
+        if event == "projects_v2":
+            hook_wrapper = "HookWrapper[[events.ProjectsV2"
+            namespace = namespace.replace(hook_wrapper, hook_wrapper + "Project")
+
+        namespaces.append(namespace)
+
+    return "\n".join((*attrs, "", *namespaces))
+
+
+if __name__ == "__main__":
+    generators = {
+        "imports": generate_imports,
+        "namespaces": generate_namespaces,
+    }
+    if gen := generators.get(sys.argv[-1]):
+        print(gen(), end="")
+    else:
+        sys.exit("Invalid option, expected 'imports' or 'namespaces'")

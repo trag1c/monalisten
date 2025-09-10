@@ -53,4 +53,4 @@ jobs:
       run: uv run pytest -vv
     - name: pyright
       if: ${{ !cancelled() && steps.sync.conclusion == 'success' }}
-      run: uv run pyright src
+      run: uv run pyright src tests scripts

@@ -5,23 +5,14 @@ import textwrap
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from pydantic import ValidationError
 
-from monalisten import AuthIssue, Monalisten, MonalistenError
+from monalisten import AuthIssue, Error, Monalisten, MonalistenPreprocessingError
 from monalisten._core import EVENT_HEADER, SIG_HEADER
 from tests.ghk_utils import DUMMY_AUTH_EVENT, sign_auth_event
 
 if TYPE_CHECKING:
-    from pydantic_core import ErrorDetails
-
     from .sse_server import ServerQueue
-
-
-def test_invalid_event_name() -> None:
-    with pytest.raises(MonalistenError, match="Invalid internal event name: 'rbob'"):
-
-        @Monalisten("").on_internal("rbob")  # pyright: ignore [reportArgumentType, reportCallIssue]
-        async def _(_: str) -> None:
-            pass
 
 
 @pytest.mark.asyncio
@@ -33,11 +24,11 @@ async def test_on_ready(
 
     client = Monalisten(url)
 
-    @client.on_internal("ready")
+    @client.internal.ready
     async def _() -> None:
         print("hello")
 
-    @client.on_internal("ready")
+    @client.internal.ready
     async def _() -> None:
         print("there")
 
@@ -57,9 +48,9 @@ async def test_on_auth_issue(sse_server: tuple[ServerQueue, str]) -> None:
     client = Monalisten(url, token="foobar")
     issue_names: list[str] = []
 
-    @client.on_internal("auth_issue")
-    async def _(issue: AuthIssue, _: dict[str, Any]) -> None:
-        issue_names.append(issue.value)
+    @client.internal.auth_issue
+    async def _(issue: AuthIssue) -> None:
+        issue_names.append(issue.kind.value)
 
     await client.listen()
 
@@ -87,7 +78,7 @@ async def test_no_error_hook(
 
     client = Monalisten(url)
 
-    with pytest.raises(MonalistenError, match=err_msg):
+    with pytest.raises(MonalistenPreprocessingError, match=err_msg):
         await client.listen()
 
 
@@ -112,10 +103,10 @@ async def test_on_error(
 
     client = Monalisten(url)
 
-    @client.on_internal("error")
-    async def _(e: dict[str, Any], message: str, _: list[ErrorDetails] | None) -> None:
-        assert e == event
-        assert message == err_msg
+    @client.internal.error
+    async def _(error: Error) -> None:
+        assert error.event_data == event
+        assert str(error.exc) == err_msg
 
     await client.listen()
 
@@ -135,14 +126,12 @@ async def test_handling_pydantic_errors(
 
     client = Monalisten(url)
 
-    @client.on_internal("error")
-    async def _(
-        _: dict[str, Any],
-        message: str,
-        pydantic_errors: list[ErrorDetails] | None,
-    ) -> None:
-        print(message)
-        for err in pydantic_errors or []:
+    @client.internal.error
+    async def _(error: Error) -> None:
+        print(str(error.exc))
+        cause = error.exc.__cause__
+        assert isinstance(cause, ValidationError)
+        for err in cause.errors():
             print("-", err["msg"])
             print(" ", err["loc"])
 
