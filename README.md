@@ -223,7 +223,7 @@ Monalisten will report auth issues in the following cases:
 
 #### `error`
 
-Monalisten can raise an error in three contexts:
+Monalisten can raise an exception in three contexts:
 * during setup, when attempting to register a hook under the bare
   `Monalisten.event` or `Monalisten.internal` namespaces,
 * during event preprocessing, when the event payload is missing crucial fields,
@@ -240,8 +240,12 @@ from pydantic import ValidationError
 
 @client.internal.error
 async def print_error_summary(error: Error) -> None:
-    event_guid = error.event_data.get("x-github-delivery", "<missing-guid>")
-    print(f"Error occurred in event {event_guid}: {str(error.exc)}")
+    if error.event_data:
+        event_guid = error.event_data.get("x-github-delivery", "<missing-guid>")
+        print(f"An error occurred in event {event_guid}: {str(error.exc)}")
+    else:
+        # event_data is not present if the error comes from a `ready` hook
+        print("An error occurred at startup!")
 
     if not isinstance(cause := error.exc.__cause__, ValidationError):
         return
@@ -251,6 +255,11 @@ async def print_error_summary(error: Error) -> None:
         print("-", err["msg"])
         print(" ", err["loc"])
 ```
+
+> [!warning]
+> Exceptions raised in the `error` hook are also handled by the `error` hook,
+> which can lead to an unhandled `RecursionError` and the original error being
+> lost.
 
 
 ### API reference

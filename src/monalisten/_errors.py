@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Any, NamedTuple
 
@@ -30,4 +32,5 @@ class Error(NamedTuple):
     """An object representing runtime error events reported by the Monalisten client."""
 
     exc: Exception
-    event_data: dict[str, Any]
+    event_name: str | None
+    event_data: dict[str, Any] | None
