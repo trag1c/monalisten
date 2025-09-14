@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 
-from monalisten import AuthIssue, Monalisten, types
+from monalisten import AuthIssue, AuthIssueKind, Monalisten, events
 from monalisten._core import SIG_HEADER
 
 from .ghk_utils import DUMMY_AUTH_EVENT, sign_auth_event
@@ -22,28 +22,28 @@ async def test_no_token(sse_server: tuple[ServerQueue, str]) -> None:
 
     client = Monalisten(url)
     hooks_triggered = 0
-    received_issues: list[AuthIssue] = []
+    received_issues: list[AuthIssueKind] = []
 
-    @client.on("*")
-    async def _(_: types.WebhookEvent) -> None:
+    @client.event.any
+    async def _(_: events.Any) -> None:
         nonlocal hooks_triggered
         hooks_triggered += 1
 
-    @client.on_internal("auth_issue")
-    async def _(issue: AuthIssue, _: dict[str, Any]) -> None:
-        received_issues.append(issue)
+    @client.internal.auth_issue
+    async def _(issue: AuthIssue) -> None:
+        received_issues.append(issue.kind)
 
     await client.listen()
 
     assert hooks_triggered == 2
-    assert received_issues == [AuthIssue.UNEXPECTED]
+    assert received_issues == [AuthIssueKind.UNEXPECTED]
 
 
 @pytest.mark.parametrize(
     ("sig_header_entry", "expected_issues", "should_be_triggered"),
     [
-        ({}, [AuthIssue.MISSING], False),
-        ({SIG_HEADER: sign_auth_event("wrong")}, [AuthIssue.MISMATCH], False),
+        ({}, [AuthIssueKind.MISSING], False),
+        ({SIG_HEADER: sign_auth_event("wrong")}, [AuthIssueKind.MISMATCH], False),
         ({SIG_HEADER: sign_auth_event("foobar")}, [], True),
         ({SIG_HEADER.title(): sign_auth_event("foobar")}, [], True),
     ],
@@ -52,7 +52,7 @@ async def test_no_token(sse_server: tuple[ServerQueue, str]) -> None:
 async def test_validation(
     sse_server: tuple[ServerQueue, str],
     sig_header_entry: dict[str, str],
-    expected_issues: list[str],
+    expected_issues: list[AuthIssueKind],
     should_be_triggered: bool,
 ) -> None:
     queue, url = sse_server
@@ -61,16 +61,16 @@ async def test_validation(
 
     client = Monalisten(url, token="foobar")
     hook_triggered = False
-    received_issues: list[AuthIssue] = []
+    received_issues: list[AuthIssueKind] = []
 
-    @client.on("*")
-    async def _(_: types.WebhookEvent) -> None:
+    @client.event.any
+    async def _(_: events.Any) -> None:
         nonlocal hook_triggered
         hook_triggered = True
 
-    @client.on_internal("auth_issue")
-    async def _(issue: AuthIssue, _: dict[str, Any]) -> None:
-        received_issues.append(issue)
+    @client.internal.auth_issue
+    async def _(issue: AuthIssue) -> None:
+        received_issues.append(issue.kind)
 
     await client.listen()
 

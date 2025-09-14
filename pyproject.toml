@@ -33,9 +33,10 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["COM", "D", "S", "PLR2004"]
+ignore = ["COM", "D", "FIX", "S", "ANN401", "PLR2004"]
 
 [tool.ruff.lint.per-file-ignores]
+"scripts/codegen.py" = ["T201", "INP001"]
 "src/monalisten/__init__.py" = ["E402"]
-"src/monalisten/types.py" = ["TC004"]
+"src/monalisten/events.py" = ["E501", "TC004"]
 "tests/*" = ["FBT", "T201", "SLF001"]

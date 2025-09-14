@@ -50,7 +50,7 @@ DUMMY_REPO = Repository(
     updated_at=None,
     open_issues=0,
     watchers=0,
-    **dict.fromkeys(  # pyright: ignore [reportArgumentType]
+    **dict.fromkeys(  # pyright: ignore[reportArgumentType]
         (
             f"{kind}_url" for kind in (
                 "html", "archive", "assignees", "blobs", "branches", "collaborators",
