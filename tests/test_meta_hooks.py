@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import sys
 import textwrap
+from contextlib import nullcontext
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -94,7 +96,7 @@ async def test_no_error_hook(
     ],
 )
 @pytest.mark.asyncio
-async def test_on_error(
+async def test_on_error_preprocessing(
     sse_server: tuple[ServerQueue, str], event: dict[str, Any], err_msg: str
 ) -> None:
     queue, url = sse_server
@@ -105,6 +107,7 @@ async def test_on_error(
 
     @client.internal.error
     async def _(error: Error) -> None:
+        assert isinstance(error.exc, MonalistenPreprocessingError)
         assert error.event_data == event
         assert str(error.exc) == err_msg
 
@@ -146,3 +149,57 @@ async def test_handling_pydantic_errors(
           ('sender', 'login')
         """
     )
+
+
+@pytest.mark.asyncio
+async def test_on_error_processing(sse_server: tuple[ServerQueue, str]) -> None:
+    queue, url = sse_server
+    await queue.send_event({"foo": "bar"})
+    await queue.end_signal()
+
+    client = Monalisten(url, token="foobar")
+
+    messages = set[str]()
+
+    @client.internal.ready
+    async def _() -> None:
+        messages.add("ready")
+        print(int("a"))
+
+    @client.internal.auth_issue
+    async def _(auth_issue: AuthIssue) -> None:
+        messages.add(f"auth issue: {auth_issue.kind.value}")
+        print(1 / 0)
+
+    @client.internal.error
+    async def _(error: Error) -> None:
+        messages.add(f"error in event {error.event_name}")
+
+    await client.listen()
+
+    assert messages == {
+        "ready",
+        "auth issue: missing",
+        "error in event ready",
+        "error in event auth_issue",
+    }
+
+
+@pytest.mark.asyncio
+async def test_on_error_self_loop(sse_server: tuple[ServerQueue, str]) -> None:
+    queue, url = sse_server
+    await queue.end_signal()
+
+    client = Monalisten(url)
+
+    @client.internal.ready
+    async def _() -> None:
+        print(1 / 0)
+
+    @client.internal.error
+    async def _(_: Error) -> None:
+        print(1 / 0)
+
+    warn = pytest.warns(RuntimeWarning) if sys.version_info < (3, 10) else nullcontext()
+    with warn, pytest.raises(RecursionError):
+        await client.listen()

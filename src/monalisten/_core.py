@@ -80,22 +80,26 @@ class Monalisten:
     async def _report_auth_issue(
         self, issue_kind: AuthIssueKind, event_data: dict[str, Any]
     ) -> None:
-        await dispatch_hooks(
-            self.internal["auth_issue"], AuthIssue(issue_kind, event_data)
+        await self._dispatch_hooks(
+            event_data,
+            "auth_issue",
+            self.internal["auth_issue"],
+            AuthIssue(issue_kind, event_data),
         )
 
     async def _raise(
         self,
-        event_data: dict[str, Any],
-        message: str,
-        pydantic_exc: ValidationError | None = None,
+        exc: Exception,
+        event_data: dict[str, Any] | None = None,
+        event_name: str | None = None,
     ) -> None:
-        exc = MonalistenPreprocessingError(message)
-        exc.__cause__ = pydantic_exc
-        if error_hooks := self.internal["error"]:
-            await dispatch_hooks(error_hooks, Error(exc, event_data))
-        else:
+        if event_data:
+            event_name = event_name or event_data.get(EVENT_HEADER)
+        if not (error_hooks := self.internal["error"]):
             raise exc
+        await self._dispatch_hooks(
+            event_data, event_name, error_hooks, Error(exc, event_name, event_data)
+        )
 
     def _prepare_event_data(self, event: ServerSentEvent) -> dict[str, Any]:
         return {k.casefold(): v for k, v in event.json().items()}
@@ -108,29 +112,30 @@ class Monalisten:
             return
 
         if not (event_name := event_data.get(EVENT_HEADER)):
-            await self._raise(
-                event_data, f"received data is missing the {EVENT_HEADER} header"
-            )
+            msg = f"received data is missing the {EVENT_HEADER} header"
+            await self._raise(MonalistenPreprocessingError(msg), event_data)
             return
 
         if not (body := event_data.get("body")):
-            await self._raise(event_data, "received data doesn't contain a body")
+            msg = "received data doesn't contain a body"
+            await self._raise(MonalistenPreprocessingError(msg), event_data, event_name)
             return
 
         try:
             webhook_event = cast("events.Any", webhooks.parse_obj(event_name, body))
         except ValidationError as pydantic_exc:
-            await self._raise(
-                event_data,
-                "the received payload could not be parsed as an event",
-                pydantic_exc,
-            )
+            msg = "the received payload could not be parsed as an event"
+            exc = MonalistenPreprocessingError(msg)
+            exc.__cause__ = pydantic_exc
+            await self._raise(exc, event_data, event_name)
             return
 
         hook_kinds = [self.event.any["*"], self.event[event_name]["*"]]
         if action := body.get("action"):
             hook_kinds.append(self.event[event_name][action])
-        await dispatch_hooks(chain.from_iterable(hook_kinds), webhook_event)
+        await self._dispatch_hooks(
+            event_data, event_name, chain.from_iterable(hook_kinds), webhook_event
+        )
 
     async def listen(self) -> None:
         """Start an internal HTTP client and stream events from `source`."""
@@ -138,13 +143,26 @@ class Monalisten:
             httpx.AsyncClient(timeout=None) as client,
             aconnect_sse(client, "GET", self._source) as sse,
         ):
-            await dispatch_hooks(cast("list[Hook[[]]]", self.internal["ready"]))
+            await self._dispatch_hooks(
+                None, "ready", cast("list[Hook[[]]]", self.internal["ready"])
+            )
             async for event in sse.aiter_sse():
                 await self._handle_event(event)
 
-
-async def dispatch_hooks(
-    hooks: Iterable[Hook[P]] | None, *args: P.args, **kwargs: P.kwargs
-) -> None:
-    if hooks is not None:
-        await asyncio.gather(*(h(*args, **kwargs) for h in hooks))
+    async def _dispatch_hooks(
+        self,
+        event_data: dict[str, Any] | None,
+        event_name: str | None,
+        hooks: Iterable[Hook[P]] | None,
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> None:
+        if hooks is None:
+            return
+        coros = (h(*args, **kwargs) for h in hooks)
+        excs = await asyncio.gather(*coros, return_exceptions=True)
+        for exc in filter(None, excs):
+            if not isinstance(exc, Exception):
+                # Don't handle non-Exceptions (like SystemExits or KeyboardInterrupts)
+                raise exc
+            await self._raise(exc, event_data, event_name)
