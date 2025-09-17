@@ -108,7 +108,7 @@ async def test_on_error_preprocessing(
     @client.internal.error
     async def _(error: Error) -> None:
         assert isinstance(error.exc, MonalistenPreprocessingError)
-        assert error.event_data == event
+        assert error.payload == event
         assert str(error.exc) == err_msg
 
     await client.listen()

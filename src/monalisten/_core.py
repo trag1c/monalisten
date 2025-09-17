@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from itertools import chain
-from typing import TYPE_CHECKING, Any, cast, final
+from typing import TYPE_CHECKING, cast, final
 
 import httpx
 from githubkit import webhooks
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import ParamSpec
 
-    from monalisten import events
+    from monalisten._errors import EventPayload
     from monalisten._namespace import Hook
 
     P = ParamSpec("P")
@@ -61,80 +61,80 @@ class Monalisten:
     def token(self) -> str | None:
         return self._token
 
-    async def _passes_auth(self, event_data: dict[str, Any]) -> bool:
+    async def _passes_auth(self, payload: EventPayload) -> bool:
         if not self._token:
-            if SIG_HEADER in event_data:
-                await self._report_auth_issue(AuthIssueKind.UNEXPECTED, event_data)
+            if SIG_HEADER in payload:
+                await self._report_auth_issue(AuthIssueKind.UNEXPECTED, payload)
             return True
 
-        if not (signature := event_data.get(SIG_HEADER)):
-            await self._report_auth_issue(AuthIssueKind.MISSING, event_data)
+        if not (signature := payload.get(SIG_HEADER)):
+            await self._report_auth_issue(AuthIssueKind.MISSING, payload)
             return False
 
-        if webhooks.verify(self._token, event_data["body"], signature):
+        if webhooks.verify(self._token, payload["body"], signature):
             return True
 
-        await self._report_auth_issue(AuthIssueKind.MISMATCH, event_data)
+        await self._report_auth_issue(AuthIssueKind.MISMATCH, payload)
         return False
 
     async def _report_auth_issue(
-        self, issue_kind: AuthIssueKind, event_data: dict[str, Any]
+        self, issue_kind: AuthIssueKind, payload: EventPayload
     ) -> None:
         await self._dispatch_hooks(
-            event_data,
+            payload,
             "auth_issue",
             self.internal["auth_issue"],
-            AuthIssue(issue_kind, event_data),
+            AuthIssue(issue_kind, payload),
         )
 
     async def _raise(
         self,
         exc: Exception,
-        event_data: dict[str, Any] | None = None,
+        payload: EventPayload | None = None,
         event_name: str | None = None,
     ) -> None:
-        if event_data:
-            event_name = event_name or event_data.get(EVENT_HEADER)
+        if payload:
+            event_name = event_name or payload.get(EVENT_HEADER)
         if not (error_hooks := self.internal["error"]):
             raise exc
         await self._dispatch_hooks(
-            event_data, event_name, error_hooks, Error(exc, event_name, event_data)
+            payload, event_name, error_hooks, Error(exc, event_name, payload)
         )
 
-    def _prepare_event_data(self, event: ServerSentEvent) -> dict[str, Any]:
-        return {k.casefold(): v for k, v in event.json().items()}
+    def _prepare_payload(self, event: ServerSentEvent) -> EventPayload:
+        return cast("EventPayload", {k.casefold(): v for k, v in event.json().items()})
 
     async def _handle_event(self, event: ServerSentEvent) -> None:
-        if not (event_data := self._prepare_event_data(event)):
+        if not (payload := self._prepare_payload(event)):
             return
 
-        if not (event_name := event_data.get(EVENT_HEADER)):
+        if not (event_name := payload.get(EVENT_HEADER)):
             msg = f"received data is missing the {EVENT_HEADER} header"
-            await self._raise(MonalistenPreprocessingError(msg), event_data)
+            await self._raise(MonalistenPreprocessingError(msg), payload)
             return
 
-        if not (body := event_data.get("body")):
+        if not (body := payload.get("body")):
             msg = "received data doesn't contain a body"
-            await self._raise(MonalistenPreprocessingError(msg), event_data, event_name)
+            await self._raise(MonalistenPreprocessingError(msg), payload, event_name)
             return
 
-        if not await self._passes_auth(event_data):
+        if not await self._passes_auth(payload):
             return
 
         try:
-            webhook_event = cast("events.Any", webhooks.parse_obj(event_name, body))
+            webhook_event = webhooks.parse_obj(event_name, body)
         except ValidationError as pydantic_exc:
             msg = "the received payload could not be parsed as an event"
             exc = MonalistenPreprocessingError(msg)
             exc.__cause__ = pydantic_exc
-            await self._raise(exc, event_data, event_name)
+            await self._raise(exc, payload, event_name)
             return
 
         hook_kinds = [self.event.any["*"], self.event[event_name]["*"]]
         if action := body.get("action"):
             hook_kinds.append(self.event[event_name][action])
         await self._dispatch_hooks(
-            event_data, event_name, chain.from_iterable(hook_kinds), webhook_event
+            payload, event_name, chain.from_iterable(hook_kinds), webhook_event
         )
 
     async def listen(self) -> None:
@@ -151,7 +151,7 @@ class Monalisten:
 
     async def _dispatch_hooks(
         self,
-        event_data: dict[str, Any] | None,
+        payload: EventPayload | None,
         event_name: str | None,
         hooks: Iterable[Hook[P]] | None,
         *args: P.args,
@@ -165,4 +165,4 @@ class Monalisten:
             if not isinstance(exc, Exception):
                 # Don't handle non-Exceptions (like SystemExits or KeyboardInterrupts)
                 raise exc
-            await self._raise(exc, event_data, event_name)
+            await self._raise(exc, payload, event_name)

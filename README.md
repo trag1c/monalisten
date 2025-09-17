@@ -203,7 +203,7 @@ saved_events_dir = Path("/path/to/logs")
 
 @client.internal.auth_issue
 async def log_and_save(issue: AuthIssue) -> None:
-    data = issue.event_data
+    data = issue.payload
     event_guid = data.get("x-github-delivery", "missing-guid")
     print(f"Auth issue in event {data}: token {issue.kind.value}")
     (saved_events_dir / f"{event_guid}.json").write_text(json.dumps(data))
@@ -240,11 +240,11 @@ from pydantic import ValidationError
 
 @client.internal.error
 async def print_error_summary(error: Error) -> None:
-    if error.event_data:
-        event_guid = error.event_data.get("x-github-delivery", "<missing-guid>")
+    if error.payload:
+        event_guid = error.payload.get("x-github-delivery", "<missing-guid>")
         print(f"An error occurred in event {event_guid}: {str(error.exc)}")
     else:
-        # event_data is not present if the error comes from a `ready` hook
+        # payload is not present if the error comes from a `ready` hook
         print("An error occurred at startup!")
 
     if not isinstance(cause := error.exc.__cause__, ValidationError):
@@ -269,7 +269,7 @@ async def print_error_summary(error: Error) -> None:
 ```py
 class AuthIssue(NamedTuple):
     kind: AuthIssueKind
-    event_data: dict[str, Any]
+    payload: EventPayload
 ```
 
 An object representing authentication issue events reported by the Monalisten
@@ -301,12 +301,38 @@ can occur:
 ```py
 class Error(NamedTuple):
     exc: Exception
-    event_data: dict[str, Any]
     event_name: str | None
+    payload: EventPayload
 ```
 
 An object representing runtime (that is, preprocessing or processing) error
 events reported by the Monalisten client.
+
+
+#### `EventPayload`
+
+```py
+EventPayload = TypedDict(
+    "EventPayload",
+    {
+        "body": dict[str, Any],
+        "x-github-hook-id": str,
+        "x-github-event": str,
+        "x-github-delivery": str,
+        "x-hub-signature": str,
+        "x-hub-signature-256": str,
+        "user-agent": str,
+        "x-github-hook-installation-target-type": str,
+        "x-github-hook-installation-target-id": str,
+    },
+)
+```
+
+Represents the raw event payload received from GitHub. Can be accessed in
+`internal.auth_issue` and `internal.error` hooks. It only lists `body` and
+headers considered "special" by GitHub (see the "Delivery headers" section of
+their [Webhook events and payloads][gh-events] page), although other headers may
+be present.
 
 
 #### `Monalisten`

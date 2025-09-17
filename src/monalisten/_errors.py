@@ -1,7 +1,23 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TypedDict
+
+EventPayload = TypedDict(
+    "EventPayload",
+    {
+        "body": dict[str, Any],
+        # This only lists headers that GitHub considers special; others may be present.
+        "x-github-hook-id": str,
+        "x-github-event": str,
+        "x-github-delivery": str,
+        "x-hub-signature": str,
+        "x-hub-signature-256": str,
+        "user-agent": str,
+        "x-github-hook-installation-target-type": str,
+        "x-github-hook-installation-target-id": str,
+    },
+)
 
 
 class AuthIssueKind(Enum):
@@ -17,7 +33,7 @@ class AuthIssue(NamedTuple):
     """An object representing auth issue events reported by the Monalisten client."""
 
     kind: AuthIssueKind
-    event_data: dict[str, Any]
+    payload: EventPayload
 
 
 class MonalistenPreprocessingError(Exception):
@@ -33,4 +49,4 @@ class Error(NamedTuple):
 
     exc: Exception
     event_name: str | None
-    event_data: dict[str, Any] | None
+    payload: EventPayload | None
