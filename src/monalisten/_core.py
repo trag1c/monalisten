@@ -108,9 +108,6 @@ class Monalisten:
         if not (event_data := self._prepare_event_data(event)):
             return
 
-        if not await self._passes_auth(event_data):
-            return
-
         if not (event_name := event_data.get(EVENT_HEADER)):
             msg = f"received data is missing the {EVENT_HEADER} header"
             await self._raise(MonalistenPreprocessingError(msg), event_data)
@@ -119,6 +116,9 @@ class Monalisten:
         if not (body := event_data.get("body")):
             msg = "received data doesn't contain a body"
             await self._raise(MonalistenPreprocessingError(msg), event_data, event_name)
+            return
+
+        if not await self._passes_auth(event_data):
             return
 
         try:

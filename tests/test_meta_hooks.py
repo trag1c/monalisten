@@ -154,7 +154,7 @@ async def test_handling_pydantic_errors(
 @pytest.mark.asyncio
 async def test_on_error_processing(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
-    await queue.send_event({"foo": "bar"})
+    await queue.send_event({EVENT_HEADER: "bar", "body": {"foo": "bar"}})
     await queue.end_signal()
 
     client = Monalisten(url, token="foobar")
