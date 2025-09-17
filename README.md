@@ -302,6 +302,7 @@ can occur:
 class Error(NamedTuple):
     exc: Exception
     event_data: dict[str, Any]
+    event_name: str | None
 ```
 
 An object representing runtime (that is, preprocessing or processing) error
