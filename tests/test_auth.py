@@ -5,11 +5,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from monalisten import AuthIssue, AuthIssueKind, Monalisten, events
-from monalisten._core import SIG_HEADER
+from monalisten._core import EVENT_HEADER, SIG_HEADER
 
 from .ghk_utils import DUMMY_AUTH_EVENT, sign_auth_event
 
 if TYPE_CHECKING:
+    from monalisten._errors import Error
+
     from .sse_server import ServerQueue
 
 
@@ -76,3 +78,24 @@ async def test_validation(
 
     assert hook_triggered is should_be_triggered
     assert received_issues == expected_issues
+
+
+# Covers a prior case where a payload with `x-github-event` and `x-hub-signature-256`
+# headers but no `body` would crash the authentication check if a token was set.
+@pytest.mark.asyncio
+async def test_no_eager_body_access(sse_server: tuple[ServerQueue, str]) -> None:
+    queue, url = sse_server
+    await queue.send_event({SIG_HEADER: "foo", EVENT_HEADER: "bar"})
+    await queue.end_signal()
+
+    client = Monalisten(url, token="foo")
+    error_captured = False
+
+    @client.internal.error
+    async def _(_: Error) -> None:
+        nonlocal error_captured
+        error_captured = True
+
+    await client.listen()
+
+    assert error_captured
