@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, cast, final
 
 import httpx
 from githubkit import webhooks
-from httpx_sse import ServerSentEvent, aconnect_sse
 from pydantic import ValidationError
 
 from monalisten._errors import (
@@ -17,10 +16,12 @@ from monalisten._errors import (
 )
 from monalisten._event_namespace import EventNamespace
 from monalisten._namespace import InternalNamespace
+from monalisten._sse import aiter_sse_retrying
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from httpx_sse import ServerSentEvent
     from typing_extensions import ParamSpec
 
     from monalisten._errors import EventPayload
@@ -139,14 +140,11 @@ class Monalisten:
 
     async def listen(self) -> None:
         """Start an internal HTTP client and stream events from `source`."""
-        async with (
-            httpx.AsyncClient(timeout=None) as client,
-            aconnect_sse(client, "GET", self._source) as sse,
-        ):
+        async with httpx.AsyncClient(timeout=None) as client:
             await self._dispatch_hooks(
                 None, "ready", cast("list[Hook[[]]]", self.internal["ready"])
             )
-            async for event in sse.aiter_sse():
+            async for event in aiter_sse_retrying(client, "GET", self._source):
                 await self._handle_event(event)
 
     async def _dispatch_hooks(
