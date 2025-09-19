@@ -176,9 +176,8 @@ defined.
 
 #### `ready`
 
-Triggered when an internal HTTP client is created and connected to the `source`,
-right before events are streamed. The expected hook signature is
-`async () -> None`.
+Triggered when an internal HTTP client is created, right before streaming events
+from `source`. The expected hook signature is `async () -> None`.
 
 ```py
 @client.internal.ready
