@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from .sse_server import ServerQueue
 
 
-@pytest.mark.asyncio
 async def test_core_streaming(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event({})
@@ -36,7 +35,6 @@ async def test_core_streaming(sse_server: tuple[ServerQueue, str]) -> None:
 
 
 @pytest.mark.parametrize("payload", ["{}", "{ }"])
-@pytest.mark.asyncio
 async def test_ignore_no_data(
     sse_server: tuple[ServerQueue, str], payload: str
 ) -> None:

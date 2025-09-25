@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from .sse_server import ServerQueue
 
 
-@pytest.mark.asyncio
 async def test_no_token(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event(DUMMY_AUTH_EVENT)
@@ -50,7 +49,6 @@ async def test_no_token(sse_server: tuple[ServerQueue, str]) -> None:
         ({SIG_HEADER.title(): sign_auth_event("foobar")}, [], True),
     ],
 )
-@pytest.mark.asyncio
 async def test_validation(
     sse_server: tuple[ServerQueue, str],
     sig_header_entry: dict[str, str],
@@ -82,7 +80,6 @@ async def test_validation(
 
 # Covers a prior case where a payload with `x-github-event` and `x-hub-signature-256`
 # headers but no `body` would crash the authentication check if a token was set.
-@pytest.mark.asyncio
 async def test_no_eager_body_access(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event({SIG_HEADER: "foo", EVENT_HEADER: "bar"})

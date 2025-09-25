@@ -3,8 +3,6 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING
 
-import pytest
-
 from monalisten import Monalisten, events
 from tests.ghk_utils import DUMMY_AUTH_EVENT, DUMMY_STAR_EVENT
 
@@ -12,7 +10,6 @@ if TYPE_CHECKING:
     from .sse_server import ServerQueue
 
 
-@pytest.mark.asyncio
 async def test_regular_scenario(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event(DUMMY_AUTH_EVENT)
@@ -35,7 +32,6 @@ async def test_regular_scenario(sse_server: tuple[ServerQueue, str]) -> None:
     assert all(hooks_triggered)
 
 
-@pytest.mark.asyncio
 async def test_one_event_multiple_hooks(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event(DUMMY_STAR_EVENT)
@@ -57,7 +53,6 @@ async def test_one_event_multiple_hooks(sse_server: tuple[ServerQueue, str]) -> 
     assert all(hooks_triggered)
 
 
-@pytest.mark.asyncio
 async def test_multiple_events_one_hook(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event(DUMMY_STAR_EVENT)
@@ -78,7 +73,6 @@ async def test_multiple_events_one_hook(sse_server: tuple[ServerQueue, str]) -> 
     assert trigger_count == 2
 
 
-@pytest.mark.asyncio
 async def test_wildcard_hook(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event(DUMMY_STAR_EVENT)
@@ -100,7 +94,6 @@ async def test_wildcard_hook(sse_server: tuple[ServerQueue, str]) -> None:
     assert trigger_count == 4
 
 
-@pytest.mark.asyncio
 async def test_subhooks(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     dummy_star_delete_event = copy.deepcopy(DUMMY_STAR_EVENT)

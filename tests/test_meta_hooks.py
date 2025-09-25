@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from .sse_server import ServerQueue
 
 
-@pytest.mark.asyncio
 async def test_on_ready(
     sse_server: tuple[ServerQueue, str], capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -40,7 +39,6 @@ async def test_on_ready(
     assert sorted(printed_messages) == ["hello", "there"]
 
 
-@pytest.mark.asyncio
 async def test_on_auth_issue(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event(DUMMY_AUTH_EVENT)
@@ -70,7 +68,6 @@ async def test_on_auth_issue(sse_server: tuple[ServerQueue, str]) -> None:
         ),
     ],
 )
-@pytest.mark.asyncio
 async def test_no_error_hook(
     sse_server: tuple[ServerQueue, str], event: dict[str, Any], err_msg: str
 ) -> None:
@@ -95,7 +92,6 @@ async def test_no_error_hook(
         ),
     ],
 )
-@pytest.mark.asyncio
 async def test_on_error_preprocessing(
     sse_server: tuple[ServerQueue, str], event: dict[str, Any], err_msg: str
 ) -> None:
@@ -114,7 +110,6 @@ async def test_on_error_preprocessing(
     await client.listen()
 
 
-@pytest.mark.asyncio
 async def test_handling_pydantic_errors(
     sse_server: tuple[ServerQueue, str],
     capsys: pytest.CaptureFixture[str],
@@ -151,7 +146,6 @@ async def test_handling_pydantic_errors(
     )
 
 
-@pytest.mark.asyncio
 async def test_on_error_processing(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.send_event({EVENT_HEADER: "bar", "body": {"foo": "bar"}})
@@ -185,7 +179,6 @@ async def test_on_error_processing(sse_server: tuple[ServerQueue, str]) -> None:
     }
 
 
-@pytest.mark.asyncio
 async def test_on_error_self_loop(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     await queue.end_signal()
