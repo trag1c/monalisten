@@ -18,15 +18,15 @@ repository = "https://github.com/trag1c/monalisten"
 [dependency-groups]
 dev = [
   "aiohttp==3.12.15",
-  "pyright==1.1.403",
+  "anyio==4.11.0",
+  "pyright==1.1.405",
   "pytest==8.4.1",
-  "pytest-asyncio==1.1.0",
   "ruff==0.12.9",
   "taplo==0.9.3",
 ]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
+anyio_mode = "auto"
 
 [tool.ruff]
 target-version = "py39"

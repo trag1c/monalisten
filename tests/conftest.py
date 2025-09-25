@@ -15,3 +15,8 @@ async def sse_server() -> AsyncIterator[tuple[ServerQueue, str]]:
     app, runner, port = await start_test_server()
     yield ServerQueue(app[QUEUE_KEY]), f"http://127.0.0.1:{port}/events"
     await runner.cleanup()
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
