@@ -122,6 +122,12 @@ class Monalisten:
         if not await self._passes_auth(payload):
             return
 
+        hook_kinds = [self.event.any["*"], self.event[event_name]["*"]]
+        if action := body.get("action"):
+            hook_kinds.append(self.event[event_name][action])
+        if not (hooks := list(chain.from_iterable(hook_kinds))):
+            return  # Skip parsing an event
+
         try:
             webhook_event = webhooks.parse_obj(event_name, body)
         except ValidationError as pydantic_exc:
@@ -131,12 +137,7 @@ class Monalisten:
             await self._raise(exc, payload, event_name)
             return
 
-        hook_kinds = [self.event.any["*"], self.event[event_name]["*"]]
-        if action := body.get("action"):
-            hook_kinds.append(self.event[event_name][action])
-        await self._dispatch_hooks(
-            payload, event_name, chain.from_iterable(hook_kinds), webhook_event
-        )
+        await self._dispatch_hooks(payload, event_name, hooks, webhook_event)
 
     async def listen(self) -> None:
         """Start an internal HTTP client and stream events from `source`."""
