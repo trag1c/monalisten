@@ -9,7 +9,13 @@ from typing import TYPE_CHECKING, Any
 import pytest
 from pydantic import ValidationError
 
-from monalisten import AuthIssue, Error, Monalisten, MonalistenPreprocessingError
+from monalisten import (
+    AuthIssue,
+    Error,
+    Monalisten,
+    MonalistenPreprocessingError,
+    events,
+)
 from monalisten._core import EVENT_HEADER, SIG_HEADER
 from tests.ghk_utils import DUMMY_AUTH_EVENT, sign_auth_event
 
@@ -62,10 +68,6 @@ async def test_on_auth_issue(sse_server: tuple[ServerQueue, str]) -> None:
     [
         ({"foo": "bar"}, f"received data is missing the {EVENT_HEADER} header"),
         ({EVENT_HEADER: "push"}, "received data doesn't contain a body"),
-        (
-            {EVENT_HEADER: "push", "body": {"foo": "bar"}},
-            "the received payload could not be parsed as an event",
-        ),
     ],
 )
 async def test_no_error_hook(
@@ -78,6 +80,38 @@ async def test_no_error_hook(
     client = Monalisten(url)
 
     with pytest.raises(MonalistenPreprocessingError, match=err_msg):
+        await client.listen()
+
+
+async def test_no_error_hook_no_preprocessing_trigger_on_unused_event(
+    sse_server: tuple[ServerQueue, str],
+) -> None:
+    queue, url = sse_server
+    await queue.send_event({EVENT_HEADER: "push", "body": {"foo": "bar"}})
+    await queue.end_signal()
+
+    client = Monalisten(url)
+
+    await client.listen()
+
+
+async def test_no_error_hook_preprocessing_trigger_on_used_event(
+    sse_server: tuple[ServerQueue, str],
+) -> None:
+    queue, url = sse_server
+    await queue.send_event({EVENT_HEADER: "push", "body": {"foo": "bar"}})
+    await queue.end_signal()
+
+    client = Monalisten(url)
+
+    @client.event.push
+    async def _(_: events.Push) -> None:
+        pass
+
+    with pytest.raises(
+        MonalistenPreprocessingError,
+        match="the received payload could not be parsed as an event",
+    ):
         await client.listen()
 
 
@@ -123,6 +157,10 @@ async def test_handling_pydantic_errors(
     await queue.end_signal()
 
     client = Monalisten(url)
+
+    @client.event.github_app_authorization
+    async def _(_: events.GithubAppAuthorization) -> None:
+        pass
 
     @client.internal.error
     async def _(error: Error) -> None:
