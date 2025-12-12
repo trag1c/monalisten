@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from githubkit.versions.latest.models import (
     WebhookPullRequestReviewRequestedOneof0,
@@ -7,14 +7,14 @@ from githubkit.versions.latest.models import (
     WebhookPullRequestReviewRequestRemovedOneof1,
 )
 
-PullRequestReviewRequested = Union[
-    WebhookPullRequestReviewRequestedOneof0,
-    WebhookPullRequestReviewRequestedOneof1,
-]
-PullRequestReviewRequestRemoved = Union[
-    WebhookPullRequestReviewRequestRemovedOneof0,
-    WebhookPullRequestReviewRequestRemovedOneof1,
-]
+PullRequestReviewRequested = (
+    WebhookPullRequestReviewRequestedOneof0
+    | WebhookPullRequestReviewRequestedOneof1
+)
+PullRequestReviewRequestRemoved = (
+    WebhookPullRequestReviewRequestRemovedOneof0
+    | WebhookPullRequestReviewRequestRemovedOneof1
+)
 
 if TYPE_CHECKING:
     from githubkit.versions.latest.webhooks import (  # noqa: I001
