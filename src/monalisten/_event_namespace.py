@@ -1054,7 +1054,13 @@ class RepositoryVulnerabilityAlertNamespace(
 
 
 SecretScanningAlertActions = Literal[
-    "created", "publicly_leaked", "reopened", "resolved", "validated"
+    "assigned",
+    "created",
+    "publicly_leaked",
+    "reopened",
+    "resolved",
+    "unassigned",
+    "validated",
 ]
 
 
@@ -1062,6 +1068,9 @@ SecretScanningAlertActions = Literal[
 class SecretScanningAlertNamespace(
     HookNamespace[SecretScanningAlertActions, "events.SecretScanningAlert"]
 ):
+    assigned: HookWrapper[[events.SecretScanningAlertAssigned]] = build_registrar(
+        "assigned"
+    )
     created: HookWrapper[[events.SecretScanningAlertCreated]] = build_registrar(
         "created"
     )
@@ -1073,6 +1082,9 @@ class SecretScanningAlertNamespace(
     )
     resolved: HookWrapper[[events.SecretScanningAlertResolved]] = build_registrar(
         "resolved"
+    )
+    unassigned: HookWrapper[[events.SecretScanningAlertUnassigned]] = build_registrar(
+        "unassigned"
     )
     validated: HookWrapper[[events.SecretScanningAlertValidated]] = build_registrar(
         "validated"
