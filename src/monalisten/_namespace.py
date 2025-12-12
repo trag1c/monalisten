@@ -1,25 +1,33 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, Literal, NoReturn, TypeVar, cast, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    NoReturn,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+    cast,
+    final,
+)
 
 from monalisten._errors import Error, MonalistenSetupError
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-    from typing_extensions import ParamSpec, Self, TypeAlias
+    from typing_extensions import Self
 
     from monalisten._errors import AuthIssue
 
-    P = ParamSpec("P")
-
-    Hook: TypeAlias = "Callable[P, Awaitable[None]]"
-    HookWrapper: TypeAlias = "Callable[[Hook[P]], Hook[P]]"
-
-
 E = TypeVar("E")
 L = TypeVar("L", bound=str)
+P = ParamSpec("P")
 InternalEventName = Literal["ready", "auth_issue", "error"]
+Hook: TypeAlias = "Callable[P, Awaitable[None]]"
+HookWrapper: TypeAlias = "Callable[[Hook[P]], Hook[P]]"
 
 
 def build_registrar(name: str) -> HookWrapper[...]:
