@@ -169,6 +169,7 @@ CodeScanningAlertActions = Literal[
     "fixed",
     "reopened",
     "reopened_by_user",
+    "updated_assignment",
 ]
 
 
@@ -189,6 +190,9 @@ class CodeScanningAlertNamespace(
     )
     reopened_by_user: HookWrapper[[events.CodeScanningAlertReopenedByUser]] = (
         build_registrar("reopened_by_user")
+    )
+    updated_assignment: HookWrapper[[events.CodeScanningAlertUpdatedAssignment]] = (
+        build_registrar("updated_assignment")
     )
 
 
@@ -242,6 +246,7 @@ class DeleteNamespace(HookNamespace[NoReturn, "events.Delete"]):
 
 
 DependabotAlertActions = Literal[
+    "assignees_changed",
     "auto_dismissed",
     "auto_reopened",
     "created",
@@ -256,6 +261,9 @@ DependabotAlertActions = Literal[
 class DependabotAlertNamespace(
     HookNamespace[DependabotAlertActions, "events.DependabotAlert"]
 ):
+    assignees_changed: HookWrapper[[events.DependabotAlertAssigneesChanged]] = (
+        build_registrar("assignees_changed")
+    )
     auto_dismissed: HookWrapper[[events.DependabotAlertAutoDismissed]] = (
         build_registrar("auto_dismissed")
     )
@@ -455,7 +463,7 @@ class InstallationTargetNamespace(
     )
 
 
-IssueCommentActions = Literal["created", "deleted", "edited"]
+IssueCommentActions = Literal["created", "deleted", "edited", "pinned", "unpinned"]
 
 
 @final
@@ -463,6 +471,8 @@ class IssueCommentNamespace(HookNamespace[IssueCommentActions, "events.IssueComm
     created: HookWrapper[[events.IssueCommentCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.IssueCommentDeleted]] = build_registrar("deleted")
     edited: HookWrapper[[events.IssueCommentEdited]] = build_registrar("edited")
+    pinned: HookWrapper[[events.IssueCommentPinned]] = build_registrar("pinned")
+    unpinned: HookWrapper[[events.IssueCommentUnpinned]] = build_registrar("unpinned")
 
 
 IssueDependenciesActions = Literal[
