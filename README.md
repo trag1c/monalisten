@@ -97,6 +97,7 @@ async def log_opened_pr(event: events.PullRequest) -> None:
         return
     print(f"New PR: #{event.number}")
 
+
 @client.event.pull_request
 async def log_pr_action(event: events.PullRequest) -> None:
     print(f"Something happened to PR #{event.number}!")
@@ -136,6 +137,7 @@ Monalisten allows registering hooks for a specific event action. The example in
 @client.event.pull_request.opened
 async def log_opened_pr(event: events.PullRequestOpened) -> None:
     print(f"New PR: #{event.number}")
+
 
 @client.event.pull_request
 async def log_pr_action(event: events.PullRequest) -> None:
@@ -200,6 +202,7 @@ from monalisten import AuthIssue
 
 saved_events_dir = Path("/path/to/logs")
 
+
 @client.internal.auth_issue
 async def log_and_save(issue: AuthIssue) -> None:
     data = issue.payload
@@ -236,6 +239,7 @@ errors are raised before the client is ready). The expected hook signature is
 ```py
 from monalisten import Error
 from pydantic import ValidationError
+
 
 @client.internal.error
 async def print_error_summary(error: Error) -> None:
