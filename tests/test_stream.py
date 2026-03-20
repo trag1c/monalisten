@@ -7,31 +7,34 @@ import pytest
 from monalisten import Monalisten
 
 if TYPE_CHECKING:
-    from httpx_sse import ServerSentEvent
+    from monalisten._errors import EventPayload
 
     from .sse_server import ServerQueue
 
 
 async def test_core_streaming(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
-    await queue.send_event({})
     await queue.send_event({"foo": "bar"})
+    await queue.send_event({})
+    await queue.send_event({"baz": "qux"})
     await queue.end_signal()
 
     client = Monalisten(url)
-    received_events: list[ServerSentEvent] = []
+    received_events: list[EventPayload] = []
 
-    async def spoofed_handle_event(event: ServerSentEvent) -> None:
-        received_events.append(event)
+    async def spoofed_handle_payload(
+        payload: EventPayload, *, skip_auth: bool = False
+    ) -> None:
+        _ = skip_auth
+        received_events.append(payload)
 
-    client._handle_event = spoofed_handle_event
+    client._handle_payload = spoofed_handle_payload
 
     await client.listen()
 
     assert len(received_events) == 2
-    assert all(e.event == "message" for e in received_events)
-    assert received_events[0].data == "{}"
-    assert received_events[1].data == '{"foo":"bar"}'
+    assert received_events[0] == {"foo": "bar"}
+    assert received_events[1] == {"baz": "qux"}
 
 
 @pytest.mark.parametrize("payload", ["{}", "{ }"])

@@ -4,13 +4,13 @@ build-backend = "uv_build"
 
 [project]
 name = "monalisten"
-version = "0.3.2"
+version = "0.4.0"
 description = "Monalisten is an async library for handling GitHub webhook events in an easy way"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "trag1c", email = "dev@jakubr.me" }]
 requires-python = ">=3.10"
-dependencies = ["githubkit>=0.14.0", "httpx>=0.28.1", "httpx-sse>=0.4.3"]
+dependencies = ["githubkit>=0.15.0", "httpx>=0.28.1", "httpx-sse>=0.4.3"]
 
 [project.urls]
 repository = "https://github.com/trag1c/monalisten"
@@ -21,7 +21,7 @@ dev = [
   "anyio>=4.12.1",
   "pyright>=1.1.408",
   "pytest>=9.0.2",
-  "ruff>=0.15.4",
+  "ruff>=0.15.7",
   "taplo>=0.9.3",
 ]
 

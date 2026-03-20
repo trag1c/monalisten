@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from itertools import chain
-from typing import TYPE_CHECKING, cast, final
+from typing import TYPE_CHECKING, Any, cast, final
 
 import httpx
 from githubkit import webhooks
@@ -21,7 +21,6 @@ from monalisten._sse import aiter_sse_retrying
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from httpx_sse import ServerSentEvent
     from typing_extensions import ParamSpec
 
     from monalisten._errors import EventPayload
@@ -102,13 +101,9 @@ class Monalisten:
             payload, event_name, error_hooks, Error(exc, event_name, payload)
         )
 
-    def _prepare_payload(self, event: ServerSentEvent) -> EventPayload:
-        return cast("EventPayload", {k.casefold(): v for k, v in event.json().items()})
-
-    async def _handle_event(self, event: ServerSentEvent) -> None:
-        if not (payload := self._prepare_payload(event)):
-            return
-
+    async def _handle_payload(
+        self, payload: EventPayload, *, skip_auth: bool = False
+    ) -> None:
         if not (event_name := payload.get(EVENT_HEADER)):
             msg = f"received data is missing the {EVENT_HEADER} header"
             await self._raise(MonalistenPreprocessingError(msg), payload)
@@ -119,14 +114,16 @@ class Monalisten:
             await self._raise(MonalistenPreprocessingError(msg), payload, event_name)
             return
 
-        if not await self._passes_auth(payload):
+        if not (skip_auth or await self._passes_auth(payload)):
             return
 
         hook_kinds = [self.event.any["*"], self.event[event_name]["*"]]
         if action := body.get("action"):
             hook_kinds.append(self.event[event_name][action])
+
         if not (hooks := list(chain.from_iterable(hook_kinds))):
-            return  # Skip parsing an event
+            # Don't parse an event if nothing will handle it anyway
+            return
 
         try:
             webhook_event = webhooks.parse_obj(event_name, body)
@@ -146,7 +143,28 @@ class Monalisten:
                 None, "ready", cast("list[Hook[[]]]", self.internal["ready"])
             )
             async for event in aiter_sse_retrying(client, "GET", self._source):
-                await self._handle_event(event)
+                if payload := {k.casefold(): v for k, v in event.json().items()}:
+                    await self._handle_payload(cast("EventPayload", payload))
+
+    async def dispatch_event(
+        self,
+        event_type: str,
+        body: dict[str, Any],
+        *,
+        headers: dict[str, Any] | None = None,
+    ) -> None:
+        """
+        Dispatch a webhook event directly to registered hooks.
+
+        Useful for testing hooks without a real GitHub webhook or SSE relay.
+        Authentication is skipped by default; set a signature header to test it.
+        """
+        payload = {EVENT_HEADER: event_type, "body": body} | {
+            k.casefold(): v for k, v in (headers or {}).items()
+        }
+        await self._handle_payload(
+            cast("EventPayload", payload), skip_auth=SIG_HEADER not in payload
+        )
 
     async def _dispatch_hooks(
         self,
@@ -162,6 +180,6 @@ class Monalisten:
         excs = await asyncio.gather(*coros, return_exceptions=True)
         for exc in filter(None, excs):
             if not isinstance(exc, Exception):
-                # Don't handle non-Exceptions (like SystemExits or KeyboardInterrupts)
+                # Don't handle non-Exceptions (like SystemExit or KeyboardInterrupt)
                 raise exc
             await self._raise(exc, payload, event_name)

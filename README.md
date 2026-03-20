@@ -17,6 +17,7 @@ events received from GitHub in an easy way. It is built on top of the amazing
   - [Action-specific hooks (subhooks)](#action-specific-hooks-subhooks)
   - [Wildcard hooks](#wildcard-hooks)
   - [Internal events](#internal-events)
+  - [Testing with manual events](#testing-with-manual-events)
   - [API reference](#api-reference)
   - [GitHub event type reference](#github-event-type-reference)
   - [`monalisten.event` reference](#monalistenevent-reference)
@@ -97,6 +98,7 @@ async def log_opened_pr(event: events.PullRequest) -> None:
         return
     print(f"New PR: #{event.number}")
 
+
 @client.event.pull_request
 async def log_pr_action(event: events.PullRequest) -> None:
     print(f"Something happened to PR #{event.number}!")
@@ -136,6 +138,7 @@ Monalisten allows registering hooks for a specific event action. The example in
 @client.event.pull_request.opened
 async def log_opened_pr(event: events.PullRequestOpened) -> None:
     print(f"New PR: #{event.number}")
+
 
 @client.event.pull_request
 async def log_pr_action(event: events.PullRequest) -> None:
@@ -200,6 +203,7 @@ from monalisten import AuthIssue
 
 saved_events_dir = Path("/path/to/logs")
 
+
 @client.internal.auth_issue
 async def log_and_save(issue: AuthIssue) -> None:
     data = issue.payload
@@ -237,6 +241,7 @@ errors are raised before the client is ready). The expected hook signature is
 from monalisten import Error
 from pydantic import ValidationError
 
+
 @client.internal.error
 async def print_error_summary(error: Error) -> None:
     if error.payload:
@@ -259,6 +264,27 @@ async def print_error_summary(error: Error) -> None:
 > Exceptions raised in the `error` hook are also handled by the `error` hook,
 > which can lead to an unhandled `RecursionError` and the original error being
 > lost.
+
+
+### Testing with manual events
+
+You can dispatch a webhook event directly to registered hooks without a GitHub
+repo or an SSE relay by using `Monalisten.dispatch_event`:
+
+```py
+await client.dispatch_event(
+    "push",
+    {
+        "after": ...,
+        "base_ref": ...,
+        "before": ...,
+        "commits": [
+            ...
+        ],
+        ...
+    }
+)
+```
 
 
 ### API reference
@@ -353,6 +379,24 @@ class Monalisten:
 ```
 
 Instantiates an internal HTTP client and starts streaming events from `source`.
+
+
+#### `Monalisten.dispatch_event`
+
+```py
+class Monalisten:
+    async def dispatch_event(
+        self,
+        event_type: str,
+        body: dict[str, Any],
+        *,
+        headers: dict[str, Any] | None = None,
+    ) -> None: ...
+```
+
+Dispatches a webhook event directly to registered hooks. Useful for testing
+hooks without a real GitHub webhook or SSE relay. Authentication is skipped by
+default; set a signature header to test it.
 
 
 #### `Monalisten.event`

@@ -47,7 +47,7 @@ async def start_test_server() -> tuple[web.Application, web.AppRunner, int]:
 
 
 class ServerQueue:
-    def __init__(self, queue: asyncio.Queue) -> None:
+    def __init__(self, queue: asyncio.Queue[str | None]) -> None:
         self._queue = queue
 
     async def send_event(self, data: dict[str, Any]) -> None:
