@@ -1,6 +1,6 @@
 from typing import cast
 
-from githubkit.versions.v2022_11_28.models import Repository, SimpleUser
+from githubkit.versions.latest.models import Repository, SimpleUser
 from githubkit.webhooks import sign as ghk_sign
 
 EX_URL = "https://example.com"
