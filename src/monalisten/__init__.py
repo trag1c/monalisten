@@ -15,7 +15,7 @@ class _MonalistenLazyModule(lm.LazyModule):
             return super().__getattr__(name)
 
         m = "webhooks" if original_name.endswith("Event") else "models"
-        module = self._get_module(f"githubkit.versions.latest.{m}")
+        module = self._get_module(f"githubkit_schemas.latest.{m}")
         value = getattr(module, original_name)
         setattr(self, name, value)
         return value

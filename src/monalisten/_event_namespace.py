@@ -504,6 +504,8 @@ IssuesActions = Literal[
     "deleted",
     "demilestoned",
     "edited",
+    "field_added",
+    "field_removed",
     "labeled",
     "locked",
     "milestoned",
@@ -529,6 +531,10 @@ class IssuesNamespace(HookNamespace[IssuesActions, "events.Issues"]):
         "demilestoned"
     )
     edited: HookWrapper[[events.IssuesEdited]] = build_registrar("edited")
+    field_added: HookWrapper[[events.IssuesFieldAdded]] = build_registrar("field_added")
+    field_removed: HookWrapper[[events.IssuesFieldRemoved]] = build_registrar(
+        "field_removed"
+    )
     labeled: HookWrapper[[events.IssuesLabeled]] = build_registrar("labeled")
     locked: HookWrapper[[events.IssuesLocked]] = build_registrar("locked")
     milestoned: HookWrapper[[events.IssuesMilestoned]] = build_registrar("milestoned")

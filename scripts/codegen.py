@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+import os
 import sys
 from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from githubkit.versions.latest.webhooks import webhook_action_types
+# The aggregate `webhook_action_types` is only populated when GitHubKit's schema
+# modules are loaded eagerly. Importing `githubkit_schemas` directly means the
+# GitHubKit lazy-module hook has not wrapped this module yet, so force eager
+# exports for this codegen process.
+os.environ.setdefault("GITHUBKIT_LAZY_DISABLE_FLAG", "1")
+
+from githubkit_schemas.latest.webhooks import webhook_action_types
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

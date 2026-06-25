@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from githubkit.versions.latest.models import (
+from githubkit_schemas.latest.models import (
     WebhookPullRequestReviewRequestedOneof0,
     WebhookPullRequestReviewRequestedOneof1,
     WebhookPullRequestReviewRequestRemovedOneof0,
@@ -17,10 +17,10 @@ PullRequestReviewRequestRemoved = (
 )
 
 if TYPE_CHECKING:
-    from githubkit.versions.latest.webhooks import (  # noqa: I001
+    from githubkit_schemas.latest.webhooks import (  # noqa: I001
 {event_aliases}
     )
-    from githubkit.versions.latest.models import (
+    from githubkit_schemas.latest.models import (
 {action_aliases}
     )
 else:

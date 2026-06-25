@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from githubkit.versions.latest.models import (
+from githubkit_schemas.latest.models import (
     WebhookPullRequestReviewRequestedOneof0,
     WebhookPullRequestReviewRequestedOneof1,
     WebhookPullRequestReviewRequestRemovedOneof0,
@@ -18,7 +18,7 @@ PullRequestReviewRequestRemoved = (
 )
 
 if TYPE_CHECKING:
-    from githubkit.versions.latest.webhooks import (  # noqa: I001
+    from githubkit_schemas.latest.webhooks import (  # noqa: I001
         BranchProtectionConfigurationEvent as BranchProtectionConfiguration,
         BranchProtectionRuleEvent as BranchProtectionRule,
         CheckRunEvent as CheckRun,
@@ -96,7 +96,7 @@ if TYPE_CHECKING:
         WorkflowJobEvent as WorkflowJob,
         WorkflowRunEvent as WorkflowRun,
     )
-    from githubkit.versions.latest.models import (
+    from githubkit_schemas.latest.models import (
         WebhookBranchProtectionConfigurationDisabled as BranchProtectionConfigurationDisabled,
         WebhookBranchProtectionConfigurationEnabled as BranchProtectionConfigurationEnabled,
         WebhookBranchProtectionRuleCreated as BranchProtectionRuleCreated,
@@ -179,6 +179,8 @@ if TYPE_CHECKING:
         WebhookIssuesDeleted as IssuesDeleted,
         WebhookIssuesDemilestoned as IssuesDemilestoned,
         WebhookIssuesEdited as IssuesEdited,
+        WebhookIssuesFieldAdded as IssuesFieldAdded,
+        WebhookIssuesFieldRemoved as IssuesFieldRemoved,
         WebhookIssuesLabeled as IssuesLabeled,
         WebhookIssuesLocked as IssuesLocked,
         WebhookIssuesMilestoned as IssuesMilestoned,
@@ -524,6 +526,8 @@ else:
         "WebhookIssuesDeleted": ("IssuesDeleted",),
         "WebhookIssuesDemilestoned": ("IssuesDemilestoned",),
         "WebhookIssuesEdited": ("IssuesEdited",),
+        "WebhookIssuesFieldAdded": ("IssuesFieldAdded",),
+        "WebhookIssuesFieldRemoved": ("IssuesFieldRemoved",),
         "WebhookIssuesLabeled": ("IssuesLabeled",),
         "WebhookIssuesLocked": ("IssuesLocked",),
         "WebhookIssuesMilestoned": ("IssuesMilestoned",),
@@ -834,6 +838,8 @@ __all__: tuple[str, ...] = (
     "IssuesDeleted",
     "IssuesDemilestoned",
     "IssuesEdited",
+    "IssuesFieldAdded",
+    "IssuesFieldRemoved",
     "IssuesLabeled",
     "IssuesLocked",
     "IssuesMilestoned",
