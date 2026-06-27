@@ -28,7 +28,7 @@ async def test_core_streaming(sse_server: tuple[ServerQueue, str]) -> None:
         _ = skip_auth
         received_events.append(payload)
 
-    client._handle_payload = spoofed_handle_payload
+    client._handle_payload = spoofed_handle_payload  # ty:ignore[invalid-assignment]
 
     await client.listen()
 

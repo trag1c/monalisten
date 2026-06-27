@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import copy
-import sys
 import textwrap
-from contextlib import nullcontext
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -150,8 +148,8 @@ async def test_handling_pydantic_errors(
 ) -> None:
     queue, url = sse_server
     bad_event = copy.deepcopy(DUMMY_AUTH_EVENT)
-    del bad_event["body"]["sender"]["login"]
-    del bad_event["body"]["action"]
+    del bad_event["body"]["sender"]["login"]  # ty:ignore[invalid-argument-type, not-subscriptable]
+    del bad_event["body"]["action"]  # ty:ignore[not-subscriptable]
 
     await queue.send_event(bad_event)
     await queue.end_signal()
@@ -231,6 +229,5 @@ async def test_on_error_self_loop(sse_server: tuple[ServerQueue, str]) -> None:
     async def _(_: Error) -> None:
         print(1 / 0)
 
-    warn = pytest.warns(RuntimeWarning) if sys.version_info < (3, 10) else nullcontext()
-    with warn, pytest.raises(RecursionError):
+    with pytest.raises(RecursionError):
         await client.listen()

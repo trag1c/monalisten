@@ -21,8 +21,8 @@ class _MonalistenLazyModule(lm.LazyModule):
         return value
 
 
-lm.LAZY_MODULES = (*lm.LAZY_MODULES, r"^monalisten\.events$")
-lm.LazyModule = _MonalistenLazyModule
+lm.LAZY_MODULES = (*lm.LAZY_MODULES, r"^monalisten\.events$")  # ty:ignore[invalid-assignment]
+lm.LazyModule = _MonalistenLazyModule  # ty:ignore[invalid-assignment]
 lm.apply()
 
 from . import events
