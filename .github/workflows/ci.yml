@@ -56,3 +56,6 @@ jobs:
       env:
         NODE_OPTIONS: --max-old-space-size=8192
       run: uv run pyright src tests scripts
+    - name: ty
+      if: ${{ !cancelled() && steps.sync.conclusion == 'success' }}
+      run: uv run ty check

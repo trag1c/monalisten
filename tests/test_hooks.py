@@ -97,9 +97,10 @@ async def test_wildcard_hook(sse_server: tuple[ServerQueue, str]) -> None:
 async def test_subhooks(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     dummy_star_delete_event = copy.deepcopy(DUMMY_STAR_EVENT)
-    cast("dict[str, Any]", dummy_star_delete_event["body"]).update(
-        {"action": "deleted", "starred_at": None}
-    )
+    cast("dict[str, Any]", dummy_star_delete_event["body"]).update({
+        "action": "deleted",
+        "starred_at": None,
+    })
     await queue.send_event(DUMMY_STAR_EVENT)
     await queue.send_event(dummy_star_delete_event)
     await queue.end_signal()

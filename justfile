@@ -9,6 +9,7 @@ check:
     uv run ruff check
     uv run pytest
     uv run pyright src tests scripts
+    uv run ty check
 
 # Run taplo and ruff in fix mode
 fix:
