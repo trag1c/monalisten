@@ -28,6 +28,7 @@ dev = [
   "pytest>=9.0.2",
   "ruff>=0.15.7",
   "taplo>=0.9.3",
+  "ty>=0.0.55",
 ]
 
 [tool.pytest.ini_options]
