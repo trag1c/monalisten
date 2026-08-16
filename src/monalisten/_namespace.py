@@ -51,7 +51,7 @@ class HookNamespace(Generic[L, E]):
             self._paths = {a: [] for a in actions}
             self._event_hooks = []
 
-        cls.__init__ = filling_init
+        cls.__init__ = filling_init  # ty:ignore[invalid-assignment]
 
     def __init__(self) -> None:
         self._paths: dict[L, list[Hook[[E]]]] = {}
@@ -73,7 +73,7 @@ class InternalNamespace(HookNamespace[InternalEventName, object]):
     auth_issue: HookWrapper[[AuthIssue]] = build_registrar("auth_issue")
     error: HookWrapper[[Error]] = build_registrar("error")
 
-    def __call__(self, _: object) -> NoReturn:
+    def __call__(self, _: object) -> NoReturn:  # ty:ignore[invalid-method-override]
         msg = (
             "bare @Monalisten.internal is not allowed, please specify a concrete"
             " internal event"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from monalisten import Monalisten, events
 from tests.ghk_utils import DUMMY_AUTH_EVENT, DUMMY_STAR_EVENT
@@ -97,7 +97,10 @@ async def test_wildcard_hook(sse_server: tuple[ServerQueue, str]) -> None:
 async def test_subhooks(sse_server: tuple[ServerQueue, str]) -> None:
     queue, url = sse_server
     dummy_star_delete_event = copy.deepcopy(DUMMY_STAR_EVENT)
-    dummy_star_delete_event["body"] |= {"action": "deleted", "starred_at": None}
+    cast("dict[str, Any]", dummy_star_delete_event["body"]).update({
+        "action": "deleted",
+        "starred_at": None,
+    })
     await queue.send_event(DUMMY_STAR_EVENT)
     await queue.send_event(dummy_star_delete_event)
     await queue.end_signal()

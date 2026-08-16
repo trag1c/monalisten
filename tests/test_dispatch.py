@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 
@@ -25,8 +25,10 @@ async def test_regular_scenario() -> None:
     async def _(_: events.Star) -> None:
         hooks_triggered[1] = True
 
-    for event in DUMMY_AUTH_EVENT, DUMMY_STAR_EVENT:
-        await client.dispatch_event(event["X-GitHub-Event"], event["body"])
+    for event in (DUMMY_AUTH_EVENT, DUMMY_STAR_EVENT):
+        await client.dispatch_event(
+            cast("str", event["X-GitHub-Event"]), cast("dict[str, Any]", event["body"])
+        )
 
     assert all(hooks_triggered)
 
