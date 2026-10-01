@@ -4,7 +4,7 @@ import asyncio
 from itertools import chain
 from typing import TYPE_CHECKING, Any, cast, final
 
-import httpx
+import httpx2
 from githubkit import webhooks
 from pydantic import ValidationError
 
@@ -138,12 +138,13 @@ class Monalisten:
 
     async def listen(self) -> None:
         """Start an internal HTTP client and stream events from `source`."""
-        async with httpx.AsyncClient(timeout=None) as client:
+        async with httpx2.AsyncClient(timeout=None) as client:
             await self._dispatch_hooks(
                 None, "ready", cast("list[Hook[[]]]", self.internal["ready"])
             )
             async for event in aiter_sse_retrying(client, "GET", self._source):
-                if payload := {k.casefold(): v for k, v in event.json().items()}:
+                data = cast("dict[str, Any]", event.json())
+                if payload := {k.casefold(): v for k, v in data.items()}:
                     await self._handle_payload(cast("EventPayload", payload))
 
     async def dispatch_event(
