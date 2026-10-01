@@ -66,6 +66,8 @@ def generate_imports() -> str:
         # Manual special case adjustment
         if event == "ProjectsV2":
             event += "Project"
+        elif event == "IssueRelatesTo":
+            event = "Issue"
 
         for action in actions:
             name = event + snake_to_pascal(action)
@@ -122,6 +124,11 @@ def generate_namespaces() -> str:
         if event == "projects_v2":
             hook_wrapper = "HookWrapper[[events.ProjectsV2"
             namespace = namespace.replace(hook_wrapper, hook_wrapper + "Project")
+        elif event == "issue_relates_to":
+            namespace = namespace.replace(
+                "events.IssueRelatesToRelatesTo",
+                "events.IssueRelatesTo",
+            )
 
         namespaces.append(namespace)
 
