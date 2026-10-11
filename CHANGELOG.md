@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+
+### Added
+- Reading events from a Redis stream by passing a `redis://`/`rediss://` URL as
+  the source. This is gated behind the new `redis` extra.
+
+### Changed
+- SSE support is now gated behind the new `sse` extra.
+- `Monalisten`'s `source` parameter and property were renamed to `url`.
+- `internal.auth_issue` hook signature is now
+  `(EventPayload, AuthResult) -> None`. `AuthIssue` was a tuple containing the
+  payload (now exported as `EventPayload`) and the `AuthIssueKind` enum (now
+  `AuthResult`).
+
+### Removed
+- The `AuthIssue` and `AuthIssueKind` types were removed in lieu of
+  `EventPayload`+`AuthResult` for `internal.auth_issue` events.
+
+
 ## [v0.4.1] - 2026-06-26
 
 ### Changed
