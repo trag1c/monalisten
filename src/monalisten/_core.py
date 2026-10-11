@@ -1,46 +1,51 @@
 from __future__ import annotations
 
 import asyncio
+from importlib.util import find_spec
 from itertools import chain
 from typing import TYPE_CHECKING, Any, cast, final
+from urllib.parse import urlsplit
 
-import httpx
 from githubkit import webhooks
 from pydantic import ValidationError
 
-from monalisten._errors import (
-    AuthIssue,
-    AuthIssueKind,
-    Error,
-    MonalistenPreprocessingError,
-)
+from monalisten._auth import SIG_HEADER, AuthResult, authenticate_payload
+from monalisten._errors import Error, MonalistenPreprocessingError, MonalistenSetupError
 from monalisten._event_namespace import EventNamespace
 from monalisten._namespace import InternalNamespace
-from monalisten._sse import aiter_sse_retrying
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from typing_extensions import ParamSpec
 
-    from monalisten._errors import EventPayload
+    from monalisten._auth import EventPayload
     from monalisten._namespace import Hook
 
     P = ParamSpec("P")
 
 EVENT_HEADER = "x-github-event"
-SIG_HEADER = "x-hub-signature-256"
+
+
+def _require_extra(*, module: str, extra: str) -> None:
+    if find_spec(module) is not None:
+        return
+    msg = (
+        f"the `{module}` module is required for streaming from the set source; "
+        f"install the `{extra}` extra"
+    )
+    raise MonalistenSetupError(msg)
 
 
 @final
 class Monalisten:
     """
-    A Monalisten client streaming events from `source`, optionally secured by the secret
-    `token`.
+    A Monalisten client streaming events from source (`url`),
+    optionally secured by the secret `token`.
     """
 
-    def __init__(self, source: str, *, token: str | None = None) -> None:
-        self._source = source
+    def __init__(self, url: str, *, token: str | None = None) -> None:
+        self._url = url
         self._token = token
         self._event = EventNamespace()
         self._internal = InternalNamespace()
@@ -54,38 +59,12 @@ class Monalisten:
         return self._internal
 
     @property
-    def source(self) -> str:
-        return self._source
+    def url(self) -> str:
+        return self._url
 
     @property
     def token(self) -> str | None:
         return self._token
-
-    async def _passes_auth(self, payload: EventPayload) -> bool:
-        if not self._token:
-            if SIG_HEADER in payload:
-                await self._report_auth_issue(AuthIssueKind.UNEXPECTED, payload)
-            return True
-
-        if not (signature := payload.get(SIG_HEADER)):
-            await self._report_auth_issue(AuthIssueKind.MISSING, payload)
-            return False
-
-        if webhooks.verify(self._token, payload["body"], signature):
-            return True
-
-        await self._report_auth_issue(AuthIssueKind.MISMATCH, payload)
-        return False
-
-    async def _report_auth_issue(
-        self, issue_kind: AuthIssueKind, payload: EventPayload
-    ) -> None:
-        await self._dispatch_hooks(
-            payload,
-            "auth_issue",
-            self.internal["auth_issue"],
-            AuthIssue(issue_kind, payload),
-        )
 
     async def _raise(
         self,
@@ -101,21 +80,22 @@ class Monalisten:
             payload, event_name, error_hooks, Error(exc, event_name, payload)
         )
 
-    async def _handle_payload(
-        self, payload: EventPayload, *, skip_auth: bool = False
-    ) -> None:
+    async def _sanity_check_payload(self, payload: EventPayload) -> bool:
         if not (event_name := payload.get(EVENT_HEADER)):
             msg = f"received data is missing the {EVENT_HEADER} header"
             await self._raise(MonalistenPreprocessingError(msg), payload)
-            return
+            return False
 
-        if not (body := payload.get("body")):
-            msg = "received data doesn't contain a body"
+        if not ((body := payload.get("body")) and isinstance(body, dict)):
+            msg = "received data doesn't contain a valid JSON object body"
             await self._raise(MonalistenPreprocessingError(msg), payload, event_name)
-            return
+            return False
 
-        if not (skip_auth or await self._passes_auth(payload)):
-            return
+        return True
+
+    async def _handle_payload(self, payload: EventPayload) -> None:
+        # These are safe to access because of the sanity check
+        event_name, body = payload[EVENT_HEADER], payload["body"]
 
         hook_kinds = [self.event.any["*"], self.event[event_name]["*"]]
         if action := body.get("action"):
@@ -136,15 +116,48 @@ class Monalisten:
 
         await self._dispatch_hooks(payload, event_name, hooks, webhook_event)
 
+    async def _dispatch_auth_issue(
+        self, payload: EventPayload, auth_result: AuthResult
+    ) -> None:
+        await self._dispatch_hooks(
+            payload, "auth_issue", self.internal["auth_issue"], payload, auth_result
+        )
+
     async def listen(self) -> None:
-        """Start an internal HTTP client and stream events from `source`."""
-        async with httpx.AsyncClient(timeout=None) as client:
-            await self._dispatch_hooks(
-                None, "ready", cast("list[Hook[[]]]", self.internal["ready"])
+        """Start streaming events from the specified source (the client's `url`)."""
+        if (split_result := urlsplit(self._url)).scheme in {"redis", "rediss"}:
+            _require_extra(module="redis", extra="redis")
+            from monalisten._redis import (  # noqa: PLC0415
+                aiter_redis_payloads,
+                extract_stream_name,
             )
-            async for event in aiter_sse_retrying(client, "GET", self._source):
-                if payload := {k.casefold(): v for k, v in event.json().items()}:
-                    await self._handle_payload(cast("EventPayload", payload))
+
+            url, stream = extract_stream_name(split_result)
+            payloads = aiter_redis_payloads(url, stream)
+        elif split_result.scheme in {"http", "https"}:
+            _require_extra(module="httpx_sse", extra="sse")
+            from monalisten._sse import aiter_sse_payloads  # noqa: PLC0415
+
+            payloads = aiter_sse_payloads(self._url)
+        else:
+            msg = f"unsupported URL scheme `{split_result.scheme}`"
+            raise MonalistenSetupError(msg)
+
+        await self._dispatch_hooks(None, "ready", self.internal["ready"])
+        async for payload in payloads:
+            await self._auth_and_handle_payload(payload)
+
+    async def _auth_and_handle_payload(self, payload: EventPayload) -> None:
+        if not await self._sanity_check_payload(payload):
+            return
+        match authenticate_payload(payload, self._token):
+            case AuthResult.OK:
+                await self._handle_payload(payload)
+            case AuthResult.MISMATCH | AuthResult.MISSING as blocking:
+                await self._dispatch_auth_issue(payload, blocking)
+            case AuthResult.UNEXPECTED as nonblocking:
+                await self._dispatch_auth_issue(payload, nonblocking)
+                await self._handle_payload(payload)
 
     async def dispatch_event(
         self,
@@ -159,12 +172,15 @@ class Monalisten:
         Useful for testing hooks without a real GitHub webhook or SSE relay.
         Authentication is skipped by default; set a signature header to test it.
         """
-        payload = {EVENT_HEADER: event_type, "body": body} | {
-            k.casefold(): v for k, v in (headers or {}).items()
-        }
-        await self._handle_payload(
-            cast("EventPayload", payload), skip_auth=SIG_HEADER not in payload
+        payload = cast(
+            "EventPayload",
+            {EVENT_HEADER: event_type, "body": body}
+            | {k.casefold(): v for k, v in (headers or {}).items()},
         )
+        if SIG_HEADER in payload:
+            await self._auth_and_handle_payload(payload)
+        elif await self._sanity_check_payload(payload):
+            await self._handle_payload(payload)
 
     async def _dispatch_hooks(
         self,

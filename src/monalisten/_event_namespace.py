@@ -20,11 +20,11 @@ class EventNamespace:
         )
         raise MonalistenSetupError(msg)
 
-    def __getitem__(self, name: str) -> HookNamespace[NoReturn, events.Any]:
+    def __getitem__(self, name: str) -> HookNamespace[NoReturn, [events.Any]]:
         return getattr(self, name)
 
     def __init__(self) -> None:  # noqa: PLR0915
-        self.any = HookNamespace[Literal["*"], "events.Any"]()
+        self.any = HookNamespace[Literal["*"], ["events.Any"]]()
         self.branch_protection_configuration = BranchProtectionConfigurationNamespace()
         self.branch_protection_rule = BranchProtectionRuleNamespace()
         self.check_run = CheckRunNamespace()
@@ -108,7 +108,7 @@ BranchProtectionConfigurationActions = Literal["disabled", "enabled"]
 @final
 class BranchProtectionConfigurationNamespace(
     HookNamespace[
-        BranchProtectionConfigurationActions, "events.BranchProtectionConfiguration"
+        BranchProtectionConfigurationActions, ["events.BranchProtectionConfiguration"]
     ]
 ):
     disabled: HookWrapper[[events.BranchProtectionConfigurationDisabled]] = (
@@ -124,7 +124,7 @@ BranchProtectionRuleActions = Literal["created", "deleted", "edited"]
 
 @final
 class BranchProtectionRuleNamespace(
-    HookNamespace[BranchProtectionRuleActions, "events.BranchProtectionRule"]
+    HookNamespace[BranchProtectionRuleActions, ["events.BranchProtectionRule"]]
 ):
     created: HookWrapper[[events.BranchProtectionRuleCreated]] = build_registrar(
         "created"
@@ -139,7 +139,7 @@ CheckRunActions = Literal["completed", "created", "requested_action", "rerequest
 
 
 @final
-class CheckRunNamespace(HookNamespace[CheckRunActions, "events.CheckRun"]):
+class CheckRunNamespace(HookNamespace[CheckRunActions, ["events.CheckRun"]]):
     completed: HookWrapper[[events.CheckRunCompleted]] = build_registrar("completed")
     created: HookWrapper[[events.CheckRunCreated]] = build_registrar("created")
     requested_action: HookWrapper[[events.CheckRunRequestedAction]] = build_registrar(
@@ -154,7 +154,7 @@ CheckSuiteActions = Literal["completed", "requested", "rerequested"]
 
 
 @final
-class CheckSuiteNamespace(HookNamespace[CheckSuiteActions, "events.CheckSuite"]):
+class CheckSuiteNamespace(HookNamespace[CheckSuiteActions, ["events.CheckSuite"]]):
     completed: HookWrapper[[events.CheckSuiteCompleted]] = build_registrar("completed")
     requested: HookWrapper[[events.CheckSuiteRequested]] = build_registrar("requested")
     rerequested: HookWrapper[[events.CheckSuiteRerequested]] = build_registrar(
@@ -175,7 +175,7 @@ CodeScanningAlertActions = Literal[
 
 @final
 class CodeScanningAlertNamespace(
-    HookNamespace[CodeScanningAlertActions, "events.CodeScanningAlert"]
+    HookNamespace[CodeScanningAlertActions, ["events.CodeScanningAlert"]]
 ):
     appeared_in_branch: HookWrapper[[events.CodeScanningAlertAppearedInBranch]] = (
         build_registrar("appeared_in_branch")
@@ -201,13 +201,13 @@ CommitCommentActions = Literal["created"]
 
 @final
 class CommitCommentNamespace(
-    HookNamespace[CommitCommentActions, "events.CommitComment"]
+    HookNamespace[CommitCommentActions, ["events.CommitComment"]]
 ):
     created: HookWrapper[[events.CommitCommentCreated]] = build_registrar("created")
 
 
 @final
-class CreateNamespace(HookNamespace[NoReturn, "events.Create"]):
+class CreateNamespace(HookNamespace[NoReturn, ["events.Create"]]):
     pass
 
 
@@ -218,7 +218,7 @@ CustomPropertyActions = Literal[
 
 @final
 class CustomPropertyNamespace(
-    HookNamespace[CustomPropertyActions, "events.CustomProperty"]
+    HookNamespace[CustomPropertyActions, ["events.CustomProperty"]]
 ):
     created: HookWrapper[[events.CustomPropertyCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.CustomPropertyDeleted]] = build_registrar("deleted")
@@ -233,7 +233,7 @@ CustomPropertyValuesActions = Literal["updated"]
 
 @final
 class CustomPropertyValuesNamespace(
-    HookNamespace[CustomPropertyValuesActions, "events.CustomPropertyValues"]
+    HookNamespace[CustomPropertyValuesActions, ["events.CustomPropertyValues"]]
 ):
     updated: HookWrapper[[events.CustomPropertyValuesUpdated]] = build_registrar(
         "updated"
@@ -241,7 +241,7 @@ class CustomPropertyValuesNamespace(
 
 
 @final
-class DeleteNamespace(HookNamespace[NoReturn, "events.Delete"]):
+class DeleteNamespace(HookNamespace[NoReturn, ["events.Delete"]]):
     pass
 
 
@@ -259,7 +259,7 @@ DependabotAlertActions = Literal[
 
 @final
 class DependabotAlertNamespace(
-    HookNamespace[DependabotAlertActions, "events.DependabotAlert"]
+    HookNamespace[DependabotAlertActions, ["events.DependabotAlert"]]
 ):
     assignees_changed: HookWrapper[[events.DependabotAlertAssigneesChanged]] = (
         build_registrar("assignees_changed")
@@ -287,7 +287,7 @@ DeployKeyActions = Literal["created", "deleted"]
 
 
 @final
-class DeployKeyNamespace(HookNamespace[DeployKeyActions, "events.DeployKey"]):
+class DeployKeyNamespace(HookNamespace[DeployKeyActions, ["events.DeployKey"]]):
     created: HookWrapper[[events.DeployKeyCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.DeployKeyDeleted]] = build_registrar("deleted")
 
@@ -296,7 +296,7 @@ DeploymentActions = Literal["created"]
 
 
 @final
-class DeploymentNamespace(HookNamespace[DeploymentActions, "events.Deployment"]):
+class DeploymentNamespace(HookNamespace[DeploymentActions, ["events.Deployment"]]):
     created: HookWrapper[[events.DeploymentCreated]] = build_registrar("created")
 
 
@@ -305,7 +305,7 @@ DeploymentProtectionRuleActions = Literal["requested"]
 
 @final
 class DeploymentProtectionRuleNamespace(
-    HookNamespace[DeploymentProtectionRuleActions, "events.DeploymentProtectionRule"]
+    HookNamespace[DeploymentProtectionRuleActions, ["events.DeploymentProtectionRule"]]
 ):
     requested: HookWrapper[[events.DeploymentProtectionRuleRequested]] = (
         build_registrar("requested")
@@ -317,7 +317,7 @@ DeploymentReviewActions = Literal["approved", "rejected", "requested"]
 
 @final
 class DeploymentReviewNamespace(
-    HookNamespace[DeploymentReviewActions, "events.DeploymentReview"]
+    HookNamespace[DeploymentReviewActions, ["events.DeploymentReview"]]
 ):
     approved: HookWrapper[[events.DeploymentReviewApproved]] = build_registrar(
         "approved"
@@ -335,7 +335,7 @@ DeploymentStatusActions = Literal["created"]
 
 @final
 class DeploymentStatusNamespace(
-    HookNamespace[DeploymentStatusActions, "events.DeploymentStatus"]
+    HookNamespace[DeploymentStatusActions, ["events.DeploymentStatus"]]
 ):
     created: HookWrapper[[events.DeploymentStatusCreated]] = build_registrar("created")
 
@@ -360,7 +360,7 @@ DiscussionActions = Literal[
 
 
 @final
-class DiscussionNamespace(HookNamespace[DiscussionActions, "events.Discussion"]):
+class DiscussionNamespace(HookNamespace[DiscussionActions, ["events.Discussion"]]):
     answered: HookWrapper[[events.DiscussionAnswered]] = build_registrar("answered")
     category_changed: HookWrapper[[events.DiscussionCategoryChanged]] = build_registrar(
         "category_changed"
@@ -389,7 +389,7 @@ DiscussionCommentActions = Literal["created", "deleted", "edited"]
 
 @final
 class DiscussionCommentNamespace(
-    HookNamespace[DiscussionCommentActions, "events.DiscussionComment"]
+    HookNamespace[DiscussionCommentActions, ["events.DiscussionComment"]]
 ):
     created: HookWrapper[[events.DiscussionCommentCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.DiscussionCommentDeleted]] = build_registrar("deleted")
@@ -397,7 +397,7 @@ class DiscussionCommentNamespace(
 
 
 @final
-class ForkNamespace(HookNamespace[NoReturn, "events.Fork"]):
+class ForkNamespace(HookNamespace[NoReturn, ["events.Fork"]]):
     pass
 
 
@@ -406,7 +406,7 @@ GithubAppAuthorizationActions = Literal["revoked"]
 
 @final
 class GithubAppAuthorizationNamespace(
-    HookNamespace[GithubAppAuthorizationActions, "events.GithubAppAuthorization"]
+    HookNamespace[GithubAppAuthorizationActions, ["events.GithubAppAuthorization"]]
 ):
     revoked: HookWrapper[[events.GithubAppAuthorizationRevoked]] = build_registrar(
         "revoked"
@@ -414,7 +414,7 @@ class GithubAppAuthorizationNamespace(
 
 
 @final
-class GollumNamespace(HookNamespace[NoReturn, "events.Gollum"]):
+class GollumNamespace(HookNamespace[NoReturn, ["events.Gollum"]]):
     pass
 
 
@@ -424,7 +424,9 @@ InstallationActions = Literal[
 
 
 @final
-class InstallationNamespace(HookNamespace[InstallationActions, "events.Installation"]):
+class InstallationNamespace(
+    HookNamespace[InstallationActions, ["events.Installation"]]
+):
     created: HookWrapper[[events.InstallationCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.InstallationDeleted]] = build_registrar("deleted")
     new_permissions_accepted: HookWrapper[
@@ -441,7 +443,7 @@ InstallationRepositoriesActions = Literal["added", "removed"]
 
 @final
 class InstallationRepositoriesNamespace(
-    HookNamespace[InstallationRepositoriesActions, "events.InstallationRepositories"]
+    HookNamespace[InstallationRepositoriesActions, ["events.InstallationRepositories"]]
 ):
     added: HookWrapper[[events.InstallationRepositoriesAdded]] = build_registrar(
         "added"
@@ -456,7 +458,7 @@ InstallationTargetActions = Literal["renamed"]
 
 @final
 class InstallationTargetNamespace(
-    HookNamespace[InstallationTargetActions, "events.InstallationTarget"]
+    HookNamespace[InstallationTargetActions, ["events.InstallationTarget"]]
 ):
     renamed: HookWrapper[[events.InstallationTargetRenamed]] = build_registrar(
         "renamed"
@@ -467,7 +469,9 @@ IssueCommentActions = Literal["created", "deleted", "edited", "pinned", "unpinne
 
 
 @final
-class IssueCommentNamespace(HookNamespace[IssueCommentActions, "events.IssueComment"]):
+class IssueCommentNamespace(
+    HookNamespace[IssueCommentActions, ["events.IssueComment"]]
+):
     created: HookWrapper[[events.IssueCommentCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.IssueCommentDeleted]] = build_registrar("deleted")
     edited: HookWrapper[[events.IssueCommentEdited]] = build_registrar("edited")
@@ -482,7 +486,7 @@ IssueDependenciesActions = Literal[
 
 @final
 class IssueDependenciesNamespace(
-    HookNamespace[IssueDependenciesActions, "events.IssueDependencies"]
+    HookNamespace[IssueDependenciesActions, ["events.IssueDependencies"]]
 ):
     blocked_by_added: HookWrapper[[events.IssueDependenciesBlockedByAdded]] = (
         build_registrar("blocked_by_added")
@@ -523,7 +527,7 @@ IssuesActions = Literal[
 
 
 @final
-class IssuesNamespace(HookNamespace[IssuesActions, "events.Issues"]):
+class IssuesNamespace(HookNamespace[IssuesActions, ["events.Issues"]]):
     assigned: HookWrapper[[events.IssuesAssigned]] = build_registrar("assigned")
     closed: HookWrapper[[events.IssuesClosed]] = build_registrar("closed")
     deleted: HookWrapper[[events.IssuesDeleted]] = build_registrar("deleted")
@@ -556,7 +560,7 @@ LabelActions = Literal["created", "deleted", "edited"]
 
 
 @final
-class LabelNamespace(HookNamespace[LabelActions, "events.Label"]):
+class LabelNamespace(HookNamespace[LabelActions, ["events.Label"]]):
     created: HookWrapper[[events.LabelCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.LabelDeleted]] = build_registrar("deleted")
     edited: HookWrapper[[events.LabelEdited]] = build_registrar("edited")
@@ -569,7 +573,7 @@ MarketplacePurchaseActions = Literal[
 
 @final
 class MarketplacePurchaseNamespace(
-    HookNamespace[MarketplacePurchaseActions, "events.MarketplacePurchase"]
+    HookNamespace[MarketplacePurchaseActions, ["events.MarketplacePurchase"]]
 ):
     cancelled: HookWrapper[[events.MarketplacePurchaseCancelled]] = build_registrar(
         "cancelled"
@@ -592,7 +596,7 @@ MemberActions = Literal["added", "edited", "removed"]
 
 
 @final
-class MemberNamespace(HookNamespace[MemberActions, "events.Member"]):
+class MemberNamespace(HookNamespace[MemberActions, ["events.Member"]]):
     added: HookWrapper[[events.MemberAdded]] = build_registrar("added")
     edited: HookWrapper[[events.MemberEdited]] = build_registrar("edited")
     removed: HookWrapper[[events.MemberRemoved]] = build_registrar("removed")
@@ -602,7 +606,7 @@ MembershipActions = Literal["added", "removed"]
 
 
 @final
-class MembershipNamespace(HookNamespace[MembershipActions, "events.Membership"]):
+class MembershipNamespace(HookNamespace[MembershipActions, ["events.Membership"]]):
     added: HookWrapper[[events.MembershipAdded]] = build_registrar("added")
     removed: HookWrapper[[events.MembershipRemoved]] = build_registrar("removed")
 
@@ -611,7 +615,7 @@ MergeGroupActions = Literal["checks_requested", "destroyed"]
 
 
 @final
-class MergeGroupNamespace(HookNamespace[MergeGroupActions, "events.MergeGroup"]):
+class MergeGroupNamespace(HookNamespace[MergeGroupActions, ["events.MergeGroup"]]):
     checks_requested: HookWrapper[[events.MergeGroupChecksRequested]] = build_registrar(
         "checks_requested"
     )
@@ -622,7 +626,7 @@ MetaActions = Literal["deleted"]
 
 
 @final
-class MetaNamespace(HookNamespace[MetaActions, "events.Meta"]):
+class MetaNamespace(HookNamespace[MetaActions, ["events.Meta"]]):
     deleted: HookWrapper[[events.MetaDeleted]] = build_registrar("deleted")
 
 
@@ -630,7 +634,7 @@ MilestoneActions = Literal["closed", "created", "deleted", "edited", "opened"]
 
 
 @final
-class MilestoneNamespace(HookNamespace[MilestoneActions, "events.Milestone"]):
+class MilestoneNamespace(HookNamespace[MilestoneActions, ["events.Milestone"]]):
     closed: HookWrapper[[events.MilestoneClosed]] = build_registrar("closed")
     created: HookWrapper[[events.MilestoneCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.MilestoneDeleted]] = build_registrar("deleted")
@@ -642,7 +646,7 @@ OrgBlockActions = Literal["blocked", "unblocked"]
 
 
 @final
-class OrgBlockNamespace(HookNamespace[OrgBlockActions, "events.OrgBlock"]):
+class OrgBlockNamespace(HookNamespace[OrgBlockActions, ["events.OrgBlock"]]):
     blocked: HookWrapper[[events.OrgBlockBlocked]] = build_registrar("blocked")
     unblocked: HookWrapper[[events.OrgBlockUnblocked]] = build_registrar("unblocked")
 
@@ -653,7 +657,9 @@ OrganizationActions = Literal[
 
 
 @final
-class OrganizationNamespace(HookNamespace[OrganizationActions, "events.Organization"]):
+class OrganizationNamespace(
+    HookNamespace[OrganizationActions, ["events.Organization"]]
+):
     deleted: HookWrapper[[events.OrganizationDeleted]] = build_registrar("deleted")
     member_added: HookWrapper[[events.OrganizationMemberAdded]] = build_registrar(
         "member_added"
@@ -671,13 +677,13 @@ PackageActions = Literal["published", "updated"]
 
 
 @final
-class PackageNamespace(HookNamespace[PackageActions, "events.Package"]):
+class PackageNamespace(HookNamespace[PackageActions, ["events.Package"]]):
     published: HookWrapper[[events.PackagePublished]] = build_registrar("published")
     updated: HookWrapper[[events.PackageUpdated]] = build_registrar("updated")
 
 
 @final
-class PageBuildNamespace(HookNamespace[NoReturn, "events.PageBuild"]):
+class PageBuildNamespace(HookNamespace[NoReturn, ["events.PageBuild"]]):
     pass
 
 
@@ -689,7 +695,7 @@ PersonalAccessTokenRequestActions = Literal[
 @final
 class PersonalAccessTokenRequestNamespace(
     HookNamespace[
-        PersonalAccessTokenRequestActions, "events.PersonalAccessTokenRequest"
+        PersonalAccessTokenRequestActions, ["events.PersonalAccessTokenRequest"]
     ]
 ):
     approved: HookWrapper[[events.PersonalAccessTokenRequestApproved]] = (
@@ -707,7 +713,7 @@ class PersonalAccessTokenRequestNamespace(
 
 
 @final
-class PingNamespace(HookNamespace[NoReturn, "events.Ping"]):
+class PingNamespace(HookNamespace[NoReturn, ["events.Ping"]]):
     pass
 
 
@@ -715,7 +721,7 @@ ProjectCardActions = Literal["converted", "created", "deleted", "edited", "moved
 
 
 @final
-class ProjectCardNamespace(HookNamespace[ProjectCardActions, "events.ProjectCard"]):
+class ProjectCardNamespace(HookNamespace[ProjectCardActions, ["events.ProjectCard"]]):
     converted: HookWrapper[[events.ProjectCardConverted]] = build_registrar("converted")
     created: HookWrapper[[events.ProjectCardCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.ProjectCardDeleted]] = build_registrar("deleted")
@@ -727,7 +733,7 @@ ProjectActions = Literal["closed", "created", "deleted", "edited", "reopened"]
 
 
 @final
-class ProjectNamespace(HookNamespace[ProjectActions, "events.Project"]):
+class ProjectNamespace(HookNamespace[ProjectActions, ["events.Project"]]):
     closed: HookWrapper[[events.ProjectClosed]] = build_registrar("closed")
     created: HookWrapper[[events.ProjectCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.ProjectDeleted]] = build_registrar("deleted")
@@ -740,7 +746,7 @@ ProjectColumnActions = Literal["created", "deleted", "edited", "moved"]
 
 @final
 class ProjectColumnNamespace(
-    HookNamespace[ProjectColumnActions, "events.ProjectColumn"]
+    HookNamespace[ProjectColumnActions, ["events.ProjectColumn"]]
 ):
     created: HookWrapper[[events.ProjectColumnCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.ProjectColumnDeleted]] = build_registrar("deleted")
@@ -752,7 +758,7 @@ ProjectsV2Actions = Literal["closed", "created", "deleted", "edited", "reopened"
 
 
 @final
-class ProjectsV2Namespace(HookNamespace[ProjectsV2Actions, "events.ProjectsV2"]):
+class ProjectsV2Namespace(HookNamespace[ProjectsV2Actions, ["events.ProjectsV2"]]):
     closed: HookWrapper[[events.ProjectsV2ProjectClosed]] = build_registrar("closed")
     created: HookWrapper[[events.ProjectsV2ProjectCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.ProjectsV2ProjectDeleted]] = build_registrar("deleted")
@@ -769,7 +775,7 @@ ProjectsV2ItemActions = Literal[
 
 @final
 class ProjectsV2ItemNamespace(
-    HookNamespace[ProjectsV2ItemActions, "events.ProjectsV2Item"]
+    HookNamespace[ProjectsV2ItemActions, ["events.ProjectsV2Item"]]
 ):
     archived: HookWrapper[[events.ProjectsV2ItemArchived]] = build_registrar("archived")
     converted: HookWrapper[[events.ProjectsV2ItemConverted]] = build_registrar(
@@ -789,7 +795,7 @@ ProjectsV2StatusUpdateActions = Literal["created", "deleted", "edited"]
 
 @final
 class ProjectsV2StatusUpdateNamespace(
-    HookNamespace[ProjectsV2StatusUpdateActions, "events.ProjectsV2StatusUpdate"]
+    HookNamespace[ProjectsV2StatusUpdateActions, ["events.ProjectsV2StatusUpdate"]]
 ):
     created: HookWrapper[[events.ProjectsV2StatusUpdateCreated]] = build_registrar(
         "created"
@@ -803,7 +809,7 @@ class ProjectsV2StatusUpdateNamespace(
 
 
 @final
-class PublicNamespace(HookNamespace[NoReturn, "events.Public"]):
+class PublicNamespace(HookNamespace[NoReturn, ["events.Public"]]):
     pass
 
 
@@ -825,6 +831,7 @@ PullRequestActions = Literal[
     "reopened",
     "review_request_removed",
     "review_requested",
+    "stacked",
     "synchronize",
     "unassigned",
     "unlabeled",
@@ -833,7 +840,7 @@ PullRequestActions = Literal[
 
 
 @final
-class PullRequestNamespace(HookNamespace[PullRequestActions, "events.PullRequest"]):
+class PullRequestNamespace(HookNamespace[PullRequestActions, ["events.PullRequest"]]):
     assigned: HookWrapper[[events.PullRequestAssigned]] = build_registrar("assigned")
     auto_merge_disabled: HookWrapper[[events.PullRequestAutoMergeDisabled]] = (
         build_registrar("auto_merge_disabled")
@@ -867,6 +874,7 @@ class PullRequestNamespace(HookNamespace[PullRequestActions, "events.PullRequest
     review_requested: HookWrapper[[events.PullRequestReviewRequested]] = (
         build_registrar("review_requested")
     )
+    stacked: HookWrapper[[events.PullRequestStacked]] = build_registrar("stacked")
     synchronize: HookWrapper[[events.PullRequestSynchronize]] = build_registrar(
         "synchronize"
     )
@@ -882,7 +890,7 @@ PullRequestReviewCommentActions = Literal["created", "deleted", "edited"]
 
 @final
 class PullRequestReviewCommentNamespace(
-    HookNamespace[PullRequestReviewCommentActions, "events.PullRequestReviewComment"]
+    HookNamespace[PullRequestReviewCommentActions, ["events.PullRequestReviewComment"]]
 ):
     created: HookWrapper[[events.PullRequestReviewCommentCreated]] = build_registrar(
         "created"
@@ -900,7 +908,7 @@ PullRequestReviewActions = Literal["dismissed", "edited", "submitted"]
 
 @final
 class PullRequestReviewNamespace(
-    HookNamespace[PullRequestReviewActions, "events.PullRequestReview"]
+    HookNamespace[PullRequestReviewActions, ["events.PullRequestReview"]]
 ):
     dismissed: HookWrapper[[events.PullRequestReviewDismissed]] = build_registrar(
         "dismissed"
@@ -916,7 +924,7 @@ PullRequestReviewThreadActions = Literal["resolved", "unresolved"]
 
 @final
 class PullRequestReviewThreadNamespace(
-    HookNamespace[PullRequestReviewThreadActions, "events.PullRequestReviewThread"]
+    HookNamespace[PullRequestReviewThreadActions, ["events.PullRequestReviewThread"]]
 ):
     resolved: HookWrapper[[events.PullRequestReviewThreadResolved]] = build_registrar(
         "resolved"
@@ -927,7 +935,7 @@ class PullRequestReviewThreadNamespace(
 
 
 @final
-class PushNamespace(HookNamespace[NoReturn, "events.Push"]):
+class PushNamespace(HookNamespace[NoReturn, ["events.Push"]]):
     pass
 
 
@@ -936,7 +944,7 @@ RegistryPackageActions = Literal["published", "updated"]
 
 @final
 class RegistryPackageNamespace(
-    HookNamespace[RegistryPackageActions, "events.RegistryPackage"]
+    HookNamespace[RegistryPackageActions, ["events.RegistryPackage"]]
 ):
     published: HookWrapper[[events.RegistryPackagePublished]] = build_registrar(
         "published"
@@ -956,7 +964,7 @@ ReleaseActions = Literal[
 
 
 @final
-class ReleaseNamespace(HookNamespace[ReleaseActions, "events.Release"]):
+class ReleaseNamespace(HookNamespace[ReleaseActions, ["events.Release"]]):
     created: HookWrapper[[events.ReleaseCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.ReleaseDeleted]] = build_registrar("deleted")
     edited: HookWrapper[[events.ReleaseEdited]] = build_registrar("edited")
@@ -975,7 +983,7 @@ RepositoryAdvisoryActions = Literal["published", "reported"]
 
 @final
 class RepositoryAdvisoryNamespace(
-    HookNamespace[RepositoryAdvisoryActions, "events.RepositoryAdvisory"]
+    HookNamespace[RepositoryAdvisoryActions, ["events.RepositoryAdvisory"]]
 ):
     published: HookWrapper[[events.RepositoryAdvisoryPublished]] = build_registrar(
         "published"
@@ -999,7 +1007,7 @@ RepositoryActions = Literal[
 
 
 @final
-class RepositoryNamespace(HookNamespace[RepositoryActions, "events.Repository"]):
+class RepositoryNamespace(HookNamespace[RepositoryActions, ["events.Repository"]]):
     archived: HookWrapper[[events.RepositoryArchived]] = build_registrar("archived")
     created: HookWrapper[[events.RepositoryCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.RepositoryDeleted]] = build_registrar("deleted")
@@ -1024,13 +1032,13 @@ RepositoryDispatchActions = Literal["sample"]
 
 @final
 class RepositoryDispatchNamespace(
-    HookNamespace[RepositoryDispatchActions, "events.RepositoryDispatch"]
+    HookNamespace[RepositoryDispatchActions, ["events.RepositoryDispatch"]]
 ):
     sample: HookWrapper[[events.RepositoryDispatchSample]] = build_registrar("sample")
 
 
 @final
-class RepositoryImportNamespace(HookNamespace[NoReturn, "events.RepositoryImport"]):
+class RepositoryImportNamespace(HookNamespace[NoReturn, ["events.RepositoryImport"]]):
     pass
 
 
@@ -1039,7 +1047,7 @@ RepositoryRulesetActions = Literal["created", "deleted", "edited"]
 
 @final
 class RepositoryRulesetNamespace(
-    HookNamespace[RepositoryRulesetActions, "events.RepositoryRuleset"]
+    HookNamespace[RepositoryRulesetActions, ["events.RepositoryRuleset"]]
 ):
     created: HookWrapper[[events.RepositoryRulesetCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.RepositoryRulesetDeleted]] = build_registrar("deleted")
@@ -1052,7 +1060,7 @@ RepositoryVulnerabilityAlertActions = Literal["create", "dismiss", "reopen", "re
 @final
 class RepositoryVulnerabilityAlertNamespace(
     HookNamespace[
-        RepositoryVulnerabilityAlertActions, "events.RepositoryVulnerabilityAlert"
+        RepositoryVulnerabilityAlertActions, ["events.RepositoryVulnerabilityAlert"]
     ]
 ):
     create: HookWrapper[[events.RepositoryVulnerabilityAlertCreate]] = build_registrar(
@@ -1072,6 +1080,8 @@ class RepositoryVulnerabilityAlertNamespace(
 SecretScanningAlertActions = Literal[
     "assigned",
     "created",
+    "metadata_created",
+    "metadata_removed",
     "publicly_leaked",
     "reopened",
     "resolved",
@@ -1082,13 +1092,19 @@ SecretScanningAlertActions = Literal[
 
 @final
 class SecretScanningAlertNamespace(
-    HookNamespace[SecretScanningAlertActions, "events.SecretScanningAlert"]
+    HookNamespace[SecretScanningAlertActions, ["events.SecretScanningAlert"]]
 ):
     assigned: HookWrapper[[events.SecretScanningAlertAssigned]] = build_registrar(
         "assigned"
     )
     created: HookWrapper[[events.SecretScanningAlertCreated]] = build_registrar(
         "created"
+    )
+    metadata_created: HookWrapper[[events.SecretScanningAlertMetadataCreated]] = (
+        build_registrar("metadata_created")
+    )
+    metadata_removed: HookWrapper[[events.SecretScanningAlertMetadataRemoved]] = (
+        build_registrar("metadata_removed")
     )
     publicly_leaked: HookWrapper[[events.SecretScanningAlertPubliclyLeaked]] = (
         build_registrar("publicly_leaked")
@@ -1113,7 +1129,7 @@ SecretScanningAlertLocationActions = Literal["created"]
 @final
 class SecretScanningAlertLocationNamespace(
     HookNamespace[
-        SecretScanningAlertLocationActions, "events.SecretScanningAlertLocation"
+        SecretScanningAlertLocationActions, ["events.SecretScanningAlertLocation"]
     ]
 ):
     created: HookWrapper[[events.SecretScanningAlertLocationCreated]] = build_registrar(
@@ -1126,7 +1142,7 @@ SecretScanningScanActions = Literal["completed"]
 
 @final
 class SecretScanningScanNamespace(
-    HookNamespace[SecretScanningScanActions, "events.SecretScanningScan"]
+    HookNamespace[SecretScanningScanActions, ["events.SecretScanningScan"]]
 ):
     completed: HookWrapper[[events.SecretScanningScanCompleted]] = build_registrar(
         "completed"
@@ -1138,7 +1154,7 @@ SecurityAdvisoryActions = Literal["published", "updated", "withdrawn"]
 
 @final
 class SecurityAdvisoryNamespace(
-    HookNamespace[SecurityAdvisoryActions, "events.SecurityAdvisory"]
+    HookNamespace[SecurityAdvisoryActions, ["events.SecurityAdvisory"]]
 ):
     published: HookWrapper[[events.SecurityAdvisoryPublished]] = build_registrar(
         "published"
@@ -1151,7 +1167,7 @@ class SecurityAdvisoryNamespace(
 
 @final
 class SecurityAndAnalysisNamespace(
-    HookNamespace[NoReturn, "events.SecurityAndAnalysis"]
+    HookNamespace[NoReturn, ["events.SecurityAndAnalysis"]]
 ):
     pass
 
@@ -1167,7 +1183,7 @@ SponsorshipActions = Literal[
 
 
 @final
-class SponsorshipNamespace(HookNamespace[SponsorshipActions, "events.Sponsorship"]):
+class SponsorshipNamespace(HookNamespace[SponsorshipActions, ["events.Sponsorship"]]):
     cancelled: HookWrapper[[events.SponsorshipCancelled]] = build_registrar("cancelled")
     created: HookWrapper[[events.SponsorshipCreated]] = build_registrar("created")
     edited: HookWrapper[[events.SponsorshipEdited]] = build_registrar("edited")
@@ -1186,13 +1202,13 @@ StarActions = Literal["created", "deleted"]
 
 
 @final
-class StarNamespace(HookNamespace[StarActions, "events.Star"]):
+class StarNamespace(HookNamespace[StarActions, ["events.Star"]]):
     created: HookWrapper[[events.StarCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.StarDeleted]] = build_registrar("deleted")
 
 
 @final
-class StatusNamespace(HookNamespace[NoReturn, "events.Status"]):
+class StatusNamespace(HookNamespace[NoReturn, ["events.Status"]]):
     pass
 
 
@@ -1202,7 +1218,7 @@ SubIssuesActions = Literal[
 
 
 @final
-class SubIssuesNamespace(HookNamespace[SubIssuesActions, "events.SubIssues"]):
+class SubIssuesNamespace(HookNamespace[SubIssuesActions, ["events.SubIssues"]]):
     parent_issue_added: HookWrapper[[events.SubIssuesParentIssueAdded]] = (
         build_registrar("parent_issue_added")
     )
@@ -1218,7 +1234,7 @@ class SubIssuesNamespace(HookNamespace[SubIssuesActions, "events.SubIssues"]):
 
 
 @final
-class TeamAddNamespace(HookNamespace[NoReturn, "events.TeamAdd"]):
+class TeamAddNamespace(HookNamespace[NoReturn, ["events.TeamAdd"]]):
     pass
 
 
@@ -1228,7 +1244,7 @@ TeamActions = Literal[
 
 
 @final
-class TeamNamespace(HookNamespace[TeamActions, "events.Team"]):
+class TeamNamespace(HookNamespace[TeamActions, ["events.Team"]]):
     added_to_repository: HookWrapper[[events.TeamAddedToRepository]] = build_registrar(
         "added_to_repository"
     )
@@ -1244,12 +1260,12 @@ WatchActions = Literal["started"]
 
 
 @final
-class WatchNamespace(HookNamespace[WatchActions, "events.Watch"]):
+class WatchNamespace(HookNamespace[WatchActions, ["events.Watch"]]):
     started: HookWrapper[[events.WatchStarted]] = build_registrar("started")
 
 
 @final
-class WorkflowDispatchNamespace(HookNamespace[NoReturn, "events.WorkflowDispatch"]):
+class WorkflowDispatchNamespace(HookNamespace[NoReturn, ["events.WorkflowDispatch"]]):
     pass
 
 
@@ -1257,7 +1273,7 @@ WorkflowJobActions = Literal["completed", "in_progress", "queued", "waiting"]
 
 
 @final
-class WorkflowJobNamespace(HookNamespace[WorkflowJobActions, "events.WorkflowJob"]):
+class WorkflowJobNamespace(HookNamespace[WorkflowJobActions, ["events.WorkflowJob"]]):
     completed: HookWrapper[[events.WorkflowJobCompleted]] = build_registrar("completed")
     in_progress: HookWrapper[[events.WorkflowJobInProgress]] = build_registrar(
         "in_progress"
@@ -1270,7 +1286,7 @@ WorkflowRunActions = Literal["completed", "in_progress", "requested"]
 
 
 @final
-class WorkflowRunNamespace(HookNamespace[WorkflowRunActions, "events.WorkflowRun"]):
+class WorkflowRunNamespace(HookNamespace[WorkflowRunActions, ["events.WorkflowRun"]]):
     completed: HookWrapper[[events.WorkflowRunCompleted]] = build_registrar("completed")
     in_progress: HookWrapper[[events.WorkflowRunInProgress]] = build_registrar(
         "in_progress"

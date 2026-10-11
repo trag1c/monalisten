@@ -5,8 +5,9 @@
 
 Monalisten is a Python 3.10+ asynchronous library that helps you handle webhook
 events received from GitHub in an easy way. It is built on top of the amazing
-[`githubkit`][githubkit] and [`httpx`][httpx] libraries and relies on [SSE]
-(with [`httpx-sse`][httpx-sse]) to stream events without exposing any endpoints.
+[`githubkit`][githubkit] library and can stream events without exposing any
+endpoints, either via [SSE] (with [`httpx-sse`][httpx-sse]) or by reading them
+from a Redis stream (with [`redis`][redis-py]).
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -35,6 +36,16 @@ poetry add monalisten
 uv add monalisten
 ```
 
+The default installation comes with no event source backends; install the
+extras for the sources you want `Monalisten.listen` to read from:
+
+```sh
+uv add "monalisten[sse]"
+uv add "monalisten[redis]"
+```
+
+(Hook registration and `Monalisten.dispatch_event` work without any extras.)
+
 You can also install it from source:
 
 ```sh
@@ -61,6 +72,19 @@ your machine.
 > to Monalisten through the `token` parameter. Now, Monalisten will validate
 > incoming payloads and discard invalid ones.
 
+Instead of an SSE relay service, you can also run your own relay that pushes
+deliveries to a Redis stream, then point Monalisten at the stream:
+
+```py
+client = Monalisten(
+    "rediss://default:secret@example-123.upstash.io:6379/stream/github-events"
+)
+```
+
+Relays are expected to push stream entries with the fields `x-github-event`,
+`x-hub-signature-256`, and `body` (the JSON as a string). The stream name is
+extracted from the URL (`/stream/<stream-name>` is removed from the URL before
+forwarding it to the actual Redis connection).
 
 ### Basic example
 
@@ -167,7 +191,7 @@ async def log(event: events.Any) -> None:
 
 Other than GitHub events, hooks can be created for handling a few internal
 events reported by Monalisten itself, such as:
-* an HTTP client is created in `.listen()` (`ready`)
+* the client is set up in `.listen()` (`ready`)
 * an authentication issue arises (`auth_issue`)
 * an error occurs (`error`)
 
@@ -179,8 +203,8 @@ defined.
 
 #### `ready`
 
-Triggered when an internal HTTP client is created, right before streaming events
-from `source`. The expected hook signature is `async () -> None`.
+Triggered when the client is set up, right before streaming events from source.
+The expected hook signature is `async () -> None`.
 
 ```py
 @client.internal.ready
@@ -193,23 +217,22 @@ async def on_ready() -> None:
 
 During its authentication step, Monalisten can report issues for unexpected
 state. Reading those requires defining an auth issue hook. The expected hook
-signature is `async (AuthIssue) -> None`.
+signature is `async (EventPayload, AuthResult) -> None`.
 
 ```py
 import json
 from pathlib import Path
 
-from monalisten import AuthIssue
+from monalisten import AuthResult, EventPayload
 
 saved_events_dir = Path("/path/to/logs")
 
 
 @client.internal.auth_issue
-async def log_and_save(issue: AuthIssue) -> None:
-    data = issue.payload
-    event_guid = data.get("x-github-delivery", "missing-guid")
-    print(f"Auth issue in event {data}: token {issue.kind.value}")
-    (saved_events_dir / f"{event_guid}.json").write_text(json.dumps(data))
+async def log_and_save(payload: EventPayload, result: AuthResult) -> None:
+    event_guid = payload.get("x-github-delivery", "missing-guid")
+    print(f"Auth issue in event {event_guid}: token {result.value}")
+    (saved_events_dir / f"{event_guid}.json").write_text(json.dumps(payload))
 ```
 
 Monalisten will report auth issues in the following cases:
@@ -289,33 +312,24 @@ await client.dispatch_event(
 
 ### API reference
 
-#### `AuthIssue`
+#### `AuthResult`
 
 ```py
-class AuthIssue(NamedTuple):
-    kind: AuthIssueKind
-    payload: EventPayload
-```
-
-An object representing authentication issue events reported by the Monalisten
-client to `auth_issue` hooks.
-
-
-#### `AuthIssueKind`
-
-```py
-class AuthIssueKind(Enum):
+class AuthResult(Enum):
+    OK = "ok"
     MISSING = "missing"
     UNEXPECTED = "unexpected"
     MISMATCH = "mismatch"
 ```
 
-An enum representing authentication issue kinds that can be encountered by the
-Monalisten client. The table below describes scenarios in which the issue kinds
-can occur:
+An enum representing the possible results of authentication attempts that can be
+encountered by the Monalisten client. The table below describes scenarios in
+which the issue kinds can occur:
 
-| Issue kind   | Client token | Received signature | Verified |
+| Auth result  | Client token | Received signature | Verified |
 | :---         | :---:        | :---:              | :---:    |
+| `OK`         | ❌           | ❌                 | —        |
+| `OK`         | ✅           | ✅                 | ✅       |
 | `MISSING`    | ✅           | ❌                 | —        |
 | `UNEXPECTED` | ❌           | ✅                 | —        |
 | `MISMATCH`   | ✅           | ✅                 | ❌       |
@@ -341,34 +355,38 @@ EventPayload = TypedDict(
     "EventPayload",
     {
         "body": dict[str, Any],
-        "x-github-hook-id": str,
         "x-github-event": str,
-        "x-github-delivery": str,
-        "x-hub-signature": str,
         "x-hub-signature-256": str,
-        "user-agent": str,
-        "x-github-hook-installation-target-type": str,
-        "x-github-hook-installation-target-id": str,
     },
 )
 ```
 
 Represents the raw event payload received from GitHub. Can be accessed in
 `internal.auth_issue` and `internal.error` hooks. It only lists `body` and
-headers considered "special" by GitHub (see the "Delivery headers" section of
-their [Webhook events and payloads][gh-events] page), although other headers may
-be present.
+headers needed by Monalisten for processing, although other headers may be
+present.
 
 
 #### `Monalisten`
 
 ```py
 class Monalisten:
-    def __init__(self, source: str, *, token: str | None = None) -> None: ...
+    def __init__(self, url: str, *, token: str | None = None) -> None: ...
 ```
 
-Creates a Monalisten client streaming events from `source`, optionally secured
-by the secret `token`.
+Creates a Monalisten client streaming events from `url`, which can be:
+* an SSE relay (requires the `sse` extra), or
+* a Redis database (requires the `redis` extra).
+
+The source is inferred from the URL scheme. Both sources can be optionally
+secured by the secret `token`.
+
+For Redis, deliveries are read from the stream indicated by `/stream/<name>` in
+the URL. This is Monalisten's own construct, and it will remove the stream
+indicator before connecting to the Redis database. For instance, supplying
+`rediss://foo:bar@example.com:6379/0/stream/events1?socket_timeout=15` as the
+source will make Monalisten extract `events1` as the stream name, and connect
+to the database with `rediss://foo:bar@example.com:6379/0?socket_timeout=15`.
 
 
 #### `Monalisten.listen`
@@ -378,7 +396,9 @@ class Monalisten:
     async def listen(self) -> None: ...
 ```
 
-Instantiates an internal HTTP client and starts streaming events from `source`.
+Starts streaming events from the source `url`. The source kind is derived from
+the URL scheme: `redis://`/`rediss://` indicates a Redis stream,
+`http://`/`https://` indicates an SSE relay URL, and anything else is rejected.
 
 
 #### `Monalisten.dispatch_event`
@@ -458,9 +478,9 @@ your LSP's autocomplete!
 
 
 [githubkit]: https://github.com/yanyongyu/githubkit
-[httpx]: https://github.com/encode/httpx
 [SSE]: https://en.wikipedia.org/wiki/Server-sent_events
 [httpx-sse]: https://github.com/florimondmanca/httpx-sse
+[redis-py]: https://github.com/redis/redis-py
 [smee.io]: https://smee.io/
 [gh-events]: https://docs.github.com/en/webhooks/webhook-events-and-payloads
 [githubkit-types]: https://github.com/trag1c/monalisten/blob/main/src/monalisten/events.py
