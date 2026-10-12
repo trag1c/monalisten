@@ -26,19 +26,14 @@ lm.LazyModule = _MonalistenLazyModule  # ty:ignore[invalid-assignment]
 lm.apply()
 
 from . import events
+from ._auth import AuthResult, EventPayload
 from ._core import Monalisten
-from ._errors import (
-    AuthIssue,
-    AuthIssueKind,
-    Error,
-    MonalistenPreprocessingError,
-    MonalistenSetupError,
-)
+from ._errors import Error, MonalistenPreprocessingError, MonalistenSetupError
 
 __all__ = (
-    "AuthIssue",
-    "AuthIssueKind",
+    "AuthResult",
     "Error",
+    "EventPayload",
     "Monalisten",
     "MonalistenPreprocessingError",
     "MonalistenSetupError",

@@ -280,6 +280,7 @@ if TYPE_CHECKING:
         WebhookPullRequestReviewSubmitted as PullRequestReviewSubmitted,
         WebhookPullRequestReviewThreadResolved as PullRequestReviewThreadResolved,
         WebhookPullRequestReviewThreadUnresolved as PullRequestReviewThreadUnresolved,
+        WebhookPullRequestStacked as PullRequestStacked,
         WebhookPullRequestSynchronize as PullRequestSynchronize,
         WebhookPullRequestUnassigned as PullRequestUnassigned,
         WebhookPullRequestUnlabeled as PullRequestUnlabeled,
@@ -315,6 +316,8 @@ if TYPE_CHECKING:
         WebhookSecretScanningAlertAssigned as SecretScanningAlertAssigned,
         WebhookSecretScanningAlertCreated as SecretScanningAlertCreated,
         WebhookSecretScanningAlertLocationCreated as SecretScanningAlertLocationCreated,
+        WebhookSecretScanningAlertMetadataCreated as SecretScanningAlertMetadataCreated,
+        WebhookSecretScanningAlertMetadataRemoved as SecretScanningAlertMetadataRemoved,
         WebhookSecretScanningAlertPubliclyLeaked as SecretScanningAlertPubliclyLeaked,
         WebhookSecretScanningAlertReopened as SecretScanningAlertReopened,
         WebhookSecretScanningAlertResolved as SecretScanningAlertResolved,
@@ -641,6 +644,7 @@ else:
         "WebhookPullRequestReviewThreadUnresolved": (
             "PullRequestReviewThreadUnresolved",
         ),
+        "WebhookPullRequestStacked": ("PullRequestStacked",),
         "WebhookPullRequestSynchronize": ("PullRequestSynchronize",),
         "WebhookPullRequestUnassigned": ("PullRequestUnassigned",),
         "WebhookPullRequestUnlabeled": ("PullRequestUnlabeled",),
@@ -685,6 +689,12 @@ else:
         "WebhookSecretScanningAlertCreated": ("SecretScanningAlertCreated",),
         "WebhookSecretScanningAlertLocationCreated": (
             "SecretScanningAlertLocationCreated",
+        ),
+        "WebhookSecretScanningAlertMetadataCreated": (
+            "SecretScanningAlertMetadataCreated",
+        ),
+        "WebhookSecretScanningAlertMetadataRemoved": (
+            "SecretScanningAlertMetadataRemoved",
         ),
         "WebhookSecretScanningAlertPubliclyLeaked": (
             "SecretScanningAlertPubliclyLeaked",
@@ -963,6 +973,7 @@ __all__: tuple[str, ...] = (
     "PullRequestReviewThread",
     "PullRequestReviewThreadResolved",
     "PullRequestReviewThreadUnresolved",
+    "PullRequestStacked",
     "PullRequestSynchronize",
     "PullRequestUnassigned",
     "PullRequestUnlabeled",
@@ -1009,6 +1020,8 @@ __all__: tuple[str, ...] = (
     "SecretScanningAlertCreated",
     "SecretScanningAlertLocation",
     "SecretScanningAlertLocationCreated",
+    "SecretScanningAlertMetadataCreated",
+    "SecretScanningAlertMetadataRemoved",
     "SecretScanningAlertPubliclyLeaked",
     "SecretScanningAlertReopened",
     "SecretScanningAlertResolved",

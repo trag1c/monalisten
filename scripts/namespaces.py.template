@@ -18,17 +18,17 @@ class EventNamespace:
         )
         raise MonalistenSetupError(msg)
 
-    def __getitem__(self, name: str) -> HookNamespace[NoReturn, events.Any]:
+    def __getitem__(self, name: str) -> HookNamespace[NoReturn, [events.Any]]:
         return getattr(self, name)
 
     def __init__(self) -> None:  # noqa: PLR0915
-        self.any = HookNamespace[Literal["*"], "events.Any"]()
+        self.any = HookNamespace[Literal["*"], ["events.Any"]]()
 #-----#
         self.{event} = {event_pascal}Namespace()
 #-----#
 
 @final
-class {event}Namespace(HookNamespace[NoReturn, "events.{event}"]):
+class {event}Namespace(HookNamespace[NoReturn, ["events.{event}"]]):
     pass
 
 #-----#
@@ -39,7 +39,7 @@ class {event}Namespace(HookNamespace[NoReturn, "events.{event}"]):
 
 
 @final
-class {event}Namespace(HookNamespace[{event}Actions, "events.{event}"]):
+class {event}Namespace(HookNamespace[{event}Actions, ["events.{event}"]]):
 
 #-----#
     {action}: HookWrapper[[events.{event}{action_pascal}]] = build_registrar("{action}")
