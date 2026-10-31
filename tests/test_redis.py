@@ -110,7 +110,7 @@ async def test_client_side_timeouts_dont_delay_events(
     # Simulate the client's socket timing out on an XREAD (redis-py surfaces socket
     # timeouts as `redis.TimeoutError`) instead of racing a tiny `socket_timeout`
     # against the BLOCK XREAD: rapidly cancelling in-flight reads, dropping the
-    # transport, and reconnecting wedges the Windows proactor event loop on Python 3.10.
+    # transport, and reconnecting wedges the Windows proactor event loop on Python 3.11.
     xreads = 0
     real_xread = aioredis.Redis.xread
 

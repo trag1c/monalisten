@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - The `AuthIssue` and `AuthIssueKind` types were removed in lieu of
   `EventPayload`+`AuthResult` for `internal.auth_issue` events.
+- Python 3.10 support
 
 
 ## [v0.4.1] - 2026-06-26
