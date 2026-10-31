@@ -10,20 +10,20 @@ readme = "README.md"
 license = "MIT"
 authors = [{ name = "trag1c", email = "dev@jakubr.me" }]
 requires-python = ">=3.11"
-dependencies = ["githubkit>=0.16.0", "githubkit-schemas>=26.7.29"]
+dependencies = ["githubkit>=0.17.0", "githubkit-schemas>=26.7.29"]
 
 [project.urls]
 repository = "https://github.com/trag1c/monalisten"
 
 [project.optional-dependencies]
 redis = ["redis>=8.1.0"]
-sse = ["httpx-sse>=0.4.3", "httpx>=0.28.1"]
+sse = ["httpx2>=2.16.0"]
 
 [dependency-groups]
 dev = [
   "aiohttp>=3.13.3",
   "anyio>=4.12.1",
-  "httpx-sse>=0.4.3",
+  "httpx2>=2.16.0",
   "pyright>=1.1.408",
   "pytest>=9.0.2",
   "redis>=8.1.0",

@@ -135,7 +135,7 @@ class Monalisten:
             url, stream = extract_stream_name(split_result)
             payloads = aiter_redis_payloads(url, stream)
         elif split_result.scheme in {"http", "https"}:
-            _require_extra(module="httpx_sse", extra="sse")
+            _require_extra(module="httpx2", extra="sse")
             from monalisten._sse import aiter_sse_payloads  # noqa: PLC0415
 
             payloads = aiter_sse_payloads(self._url)

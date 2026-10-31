@@ -1,6 +1,10 @@
 version = 1
 revision = 5
 requires-python = ">=3.11"
+resolution-markers = [
+    "python_full_version >= '3.12' and sys_platform == 'emscripten'",
+    "python_full_version < '3.12' or sys_platform != 'emscripten'",
+]
 
 [[package]]
 name = "aiohappyeyeballs"
@@ -319,7 +323,7 @@ wheels = [
 
 [[package]]
 name = "githubkit"
-version = "0.16.0"
+version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -329,9 +333,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/cc/13b08ec736f8d34f725ef7c008956b497070dc22159bd118edc7ac792ff5/githubkit-0.16.0.tar.gz", hash = "sha256:b0aa62a535ac99a5d958cf51a6fec66416247ddb5832be57c3f8c4995a34bcca", size = 33943, upload-time = "2026-06-14T09:48:42.346Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/45/5f1fddc86cf2a9e9cdc6aa63e43bad3f8e230ba739f474604f984531ff9d/githubkit-0.17.0.tar.gz", hash = "sha256:ccedcd9f2fc3fa270e126d468a61bdecf9a7f9b1dbc43fb0eef74cf5060203d7", size = 39896, upload-time = "2026-10-28T17:29:25.089Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/8c/32ca0146c373ce8e798c4edebcfc5901579ff06de0b6bc788bce3cb846f4/githubkit-0.16.0-py3-none-any.whl", hash = "sha256:b927f6bb1d4646ae64282a4373dd4a720e568c789d5b4ed1e8f06c562b642b26", size = 42898, upload-time = "2026-06-14T09:48:43.282Z" },
+    { url = "https://files.pythonhosted.org/packages/37/5f/ba187d5d1da0b29599e9617fe20bed22ad2eca0d10611a4d1907ae63a2de/githubkit-0.17.0-py3-none-any.whl", hash = "sha256:3439e35462044142aa21c01d00102d8c03cb2b98f1aa354c2a83cb026c9af249", size = 43922, upload-time = "2026-10-28T17:29:24.15Z" },
 ]
 
 [[package]]
@@ -370,15 +374,15 @@ wheels = [
 
 [[package]]
 name = "hishel"
-version = "1.3.0"
+version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msgpack" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/6c/6fda06f82ec7adc959ec49d80a87e26d31ddce2a9a4c8582a8721c9ac8ec/hishel-1.3.0.tar.gz", hash = "sha256:5be585dca8c035866cffc745a50dbce6b277a3d1f4b07ef24f77c07f6b31ff92", size = 813532, upload-time = "2026-06-11T08:41:29.699Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/ff/efba29288e1d304359491fa3aab83174c3ef24a63819e6acad6873d8c0a9/hishel-1.4.0.tar.gz", hash = "sha256:e406b052c658ce28629fc31423b9914b637d47d7c923f5fe9e288ec47e4823d1", size = 813499, upload-time = "2026-09-16T15:38:54.085Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/fd/8d2ed31f94fbf6fd15923afdb40d0e4ed26286ecaa70c256033b240ca5b1/hishel-1.3.0-py3-none-any.whl", hash = "sha256:b803ad9f1d410085b61459a5dbbd273806215021e672198ba911c7d3db14adaa", size = 73626, upload-time = "2026-06-11T08:41:28.079Z" },
+    { url = "https://files.pythonhosted.org/packages/da/c5/2cf7b80da9833de6ae5099111b64cf541830ccb4ef26605ae86f23ed5604/hishel-1.4.0-py3-none-any.whl", hash = "sha256:38cb62d7d38fb437dc086f789c26d0cab41310d12497ec3f56dcead4b08571f0", size = 80795, upload-time = "2026-09-16T15:38:52.545Z" },
 ]
 
 [package.optional-dependencies]
@@ -406,6 +410,19 @@ wheels = [
 ]
 
 [[package]]
+name = "httpcore2"
+version = "2.16.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "h11" },
+    { name = "truststore" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/61/afa9d6b7452f9eca73f73d45324eb0bb52f098fd5e6049bf6b8263be9b4e/httpcore2-2.16.0.tar.gz", hash = "sha256:c72cd0413563b17e1cd8354677dff887466f8ec2551679759e93126534428643", size = 69886, upload-time = "2026-10-21T07:09:45.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/c2/ce417c397afa5181f0e3c6ff01a4d01639414e1adef08730d97571297151/httpcore2-2.16.0-py3-none-any.whl", hash = "sha256:5c4358319f2602d984ad93182c9fee5160f22e9da7babdda870a5e7c4e2dc34f", size = 85070, upload-time = "2026-10-21T07:09:42.802Z" },
+]
+
+[[package]]
 name = "httpx"
 version = "0.28.1"
 source = { registry = "https://pypi.org/simple" }
@@ -421,12 +438,29 @@ wheels = [
 ]
 
 [[package]]
-name = "httpx-sse"
-version = "0.4.3"
+name = "httpx2"
+version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0f/4c/751061ffa58615a32c31b2d82e8482be8dd4a89154f003147acee90f2be9/httpx_sse-0.4.3.tar.gz", hash = "sha256:9b1ed0127459a66014aec3c56bebd93da3c1bc8bb6618c8082039a44889a755d", size = 15943, upload-time = "2025-10-10T21:48:22.271Z" }
+dependencies = [
+    { name = "anyio", marker = "sys_platform != 'emscripten'" },
+    { name = "httpcore2", marker = "sys_platform != 'emscripten'" },
+    { name = "httpx2-jsfetch", marker = "python_full_version >= '3.12' and sys_platform == 'emscripten'" },
+    { name = "idna" },
+    { name = "truststore", marker = "sys_platform != 'emscripten'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/43/73/5ca2cedf5e4e50423d1c258877865a6b62793633b561c58499f8aeb33b7e/httpx2-2.16.0.tar.gz", hash = "sha256:0d54c98128e8f2ff7fbbde0fca8c359e5f032edeaaaac443cdb7f31f685bcd7f", size = 103116, upload-time = "2026-10-21T07:09:46.348Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/fd/6668e5aec43ab844de6fc74927e155a3b37bf40d7c3790e49fc0406b6578/httpx_sse-0.4.3-py3-none-any.whl", hash = "sha256:0ac1c9fe3c0afad2e0ebb25a934a59f4c7823b60792691f779fad2c5568830fc", size = 8960, upload-time = "2025-10-10T21:48:21.158Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/3d/2e4bc4fd1ef9770871669adb348d612a6e4786b303a23f9935b81c48dd60/httpx2-2.16.0-py3-none-any.whl", hash = "sha256:fd2c5d7909e8d86fe92d53020c310ca0e4e431b838c207c5754b9bbf0308d49a", size = 97880, upload-time = "2026-10-21T07:09:44.01Z" },
+]
+
+[[package]]
+name = "httpx2-jsfetch"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/c4/0e5636363151a2a1795e0a77617168b9ca438e1748ec05fc9b5687f93d64/httpx2_jsfetch-1.0.tar.gz", hash = "sha256:70a0e3eabfef7cce5ad9c629f7d01ca05e418f586646f4ddf14782e4c1454c60", size = 6872, upload-time = "2026-08-07T00:13:07.492Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/43/832f631d32e4f1211caa2ba368317739fe71f0b8530e4c9d15dc454bac2a/httpx2_jsfetch-1.0-py3-none-any.whl", hash = "sha256:cb916b707601e69a07721aabc8f3f6659be3a6893bc1ff5c6f9e02241df2da32", size = 6382, upload-time = "2026-08-07T00:13:06.567Z" },
 ]
 
 [[package]]
@@ -461,15 +495,14 @@ redis = [
     { name = "redis" },
 ]
 sse = [
-    { name = "httpx" },
-    { name = "httpx-sse" },
+    { name = "httpx2" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "aiohttp" },
     { name = "anyio" },
-    { name = "httpx-sse" },
+    { name = "httpx2" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "redis" },
@@ -480,10 +513,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "githubkit", specifier = ">=0.16.0" },
+    { name = "githubkit", specifier = ">=0.17.0" },
     { name = "githubkit-schemas", specifier = ">=26.7.29" },
-    { name = "httpx", marker = "extra == 'sse'", specifier = ">=0.28.1" },
-    { name = "httpx-sse", marker = "extra == 'sse'", specifier = ">=0.4.3" },
+    { name = "httpx2", marker = "extra == 'sse'", specifier = ">=2.16.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=8.1.0" },
 ]
 provides-extras = ["redis", "sse"]
@@ -492,7 +524,7 @@ provides-extras = ["redis", "sse"]
 dev = [
     { name = "aiohttp", specifier = ">=3.13.3" },
     { name = "anyio", specifier = ">=4.12.1" },
-    { name = "httpx-sse", specifier = ">=0.4.3" },
+    { name = "httpx2", specifier = ">=2.16.0" },
     { name = "pyright", specifier = ">=1.1.408" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "redis", specifier = ">=8.1.0" },
@@ -1023,6 +1055,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/cc/656aed22a59cf4c50dcaaa66aaa570d4a1412acdd8ea429120a6bb00f336/taplo-0.9.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:33f12648f273478d7330cb3529c82f48f388501e1122e0bea78bce5ff5972b8b", size = 4468935, upload-time = "2024-08-19T10:22:08.106Z" },
     { url = "https://files.pythonhosted.org/packages/21/15/d8db1db6382b444122fa1a66fe5fe0dd5b04bfbe68c74bdb5345aec11eb2/taplo-0.9.3-py3-none-win32.whl", hash = "sha256:9ab7df76a3facc6d0dd2fe2dae3e8eb52fa458d31d27878d5eac14f5cbc0abac", size = 3482612, upload-time = "2024-08-19T10:22:10.904Z" },
     { url = "https://files.pythonhosted.org/packages/42/3c/df6641d7e2e84a6dd4de3b3a4426db7f6a7270c05bbdeadd523645c9c45f/taplo-0.9.3-py3-none-win_amd64.whl", hash = "sha256:7d80b630b93fb43cee99d1e1ee07b616236dc5615efaf7cd51074b4cffc33bab", size = 3985843, upload-time = "2024-08-19T10:22:13.446Z" },
+]
+
+[[package]]
+name = "truststore"
+version = "0.10.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/9f/c5201d42a484c061e528825fc8e2d565f5abd50a4ced6fb7d29c4ec99b2b/truststore-0.10.5.tar.gz", hash = "sha256:30d36967ccaded5cbb38d602c433f53600036c79d502f4533a49b60a03bbefcd", size = 28091, upload-time = "2026-10-12T22:27:31.808Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl", hash = "sha256:9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c", size = 19017, upload-time = "2026-10-12T22:27:30.377Z" },
 ]
 
 [[package]]
