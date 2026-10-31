@@ -7,6 +7,7 @@ from typing import (
     Literal,
     NoReturn,
     ParamSpec,
+    Self,
     TypeAlias,
     TypeVar,
     cast,
@@ -17,8 +18,6 @@ from monalisten._errors import Error, MonalistenSetupError
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
-
-    from typing_extensions import Self
 
     from monalisten._auth import AuthResult, EventPayload
 

@@ -105,7 +105,7 @@ async def _xread(fake: FakeRedis, cmd: list[str]) -> bytes | None:
         try:
             fake.xread_parked.set()
             _ = await asyncio.wait_for(fake.new_entry.wait(), timeout=block_s)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return NIL
         finally:
             fake.xread_parked.clear()

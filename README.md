@@ -3,7 +3,7 @@
 
 # Monalisten
 
-Monalisten is a Python 3.10+ asynchronous library that helps you handle webhook
+Monalisten is a Python 3.11+ asynchronous library that helps you handle webhook
 events received from GitHub in an easy way. It is built on top of the amazing
 [`githubkit`][githubkit] library and can stream events without exposing any
 endpoints, either via [SSE] (with [`httpx-sse`][httpx-sse]) or by reading them
