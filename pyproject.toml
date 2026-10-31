@@ -4,28 +4,29 @@ build-backend = "uv_build"
 
 [project]
 name = "monalisten"
-version = "0.4.1"
+version = "0.5.0"
 description = "Monalisten is an async library for handling GitHub webhook events in an easy way"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "trag1c", email = "dev@jakubr.me" }]
 requires-python = ">=3.10"
-dependencies = [
-  "githubkit>=0.16.0",
-  "githubkit-schemas>=26.6.14",
-  "httpx>=0.28.1",
-  "httpx-sse>=0.4.3",
-]
+dependencies = ["githubkit>=0.16.0", "githubkit-schemas>=26.7.29"]
 
 [project.urls]
 repository = "https://github.com/trag1c/monalisten"
+
+[project.optional-dependencies]
+redis = ["redis>=8.1.0"]
+sse = ["httpx-sse>=0.4.3", "httpx>=0.28.1"]
 
 [dependency-groups]
 dev = [
   "aiohttp>=3.13.3",
   "anyio>=4.12.1",
+  "httpx-sse>=0.4.3",
   "pyright>=1.1.408",
   "pytest>=9.0.2",
+  "redis>=8.1.0",
   "ruff>=0.15.7",
   "taplo>=0.9.3",
   "ty>=0.0.55",
@@ -33,6 +34,8 @@ dev = [
 
 [tool.pytest.ini_options]
 anyio_mode = "auto"
+# Dump thread stacks if a test runs longer than this:
+faulthandler_timeout = 60
 
 [tool.ruff]
 target-version = "py310"

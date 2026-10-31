@@ -1,39 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum
-from typing import Any, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, NamedTuple
 
-EventPayload = TypedDict(
-    "EventPayload",
-    {
-        "body": dict[str, Any],
-        # This only lists headers that GitHub considers special; others may be present.
-        "x-github-hook-id": str,
-        "x-github-event": str,
-        "x-github-delivery": str,
-        "x-hub-signature": str,
-        "x-hub-signature-256": str,
-        "user-agent": str,
-        "x-github-hook-installation-target-type": str,
-        "x-github-hook-installation-target-id": str,
-    },
-)
-
-
-class AuthIssueKind(Enum):
-    MISSING = "missing"
-    """Client has set token, but no signature was received."""
-    UNEXPECTED = "unexpected"
-    """Client has no set token, but a signature was received."""
-    MISMATCH = "mismatch"
-    """Client's token couldn't verify received signature."""
-
-
-class AuthIssue(NamedTuple):
-    """An object representing auth issue events reported by the Monalisten client."""
-
-    kind: AuthIssueKind
-    payload: EventPayload
+if TYPE_CHECKING:
+    from monalisten._auth import EventPayload
 
 
 class MonalistenPreprocessingError(Exception):
@@ -41,7 +11,7 @@ class MonalistenPreprocessingError(Exception):
 
 
 class MonalistenSetupError(Exception):
-    """Exception for Monalisten errors occurring before client creation."""
+    """Exception for Monalisten errors occurring before client setup."""
 
 
 class Error(NamedTuple):

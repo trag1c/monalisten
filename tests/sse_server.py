@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-from contextlib import suppress
-from typing import Any, cast
+from contextlib import asynccontextmanager, suppress
+from typing import TYPE_CHECKING, Any, cast
 
 from aiohttp import web
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 QUEUE_KEY = web.AppKey("queue", asyncio.Queue)
 
@@ -51,7 +54,19 @@ class ServerQueue:
         self._queue = queue
 
     async def send_event(self, data: dict[str, Any]) -> None:
-        await self._queue.put(json.dumps(data, separators=(",", ":")))
+        await self.send_raw(json.dumps(data, separators=(",", ":")))
+
+    async def send_raw(self, raw_data: str) -> None:
+        await self._queue.put(raw_data)
 
     async def end_signal(self) -> None:
         await self._queue.put(None)
+
+
+@asynccontextmanager
+async def run_sse_server() -> AsyncIterator[tuple[ServerQueue, str]]:
+    app, runner, port = await start_test_server()
+    try:
+        yield ServerQueue(app[QUEUE_KEY]), f"http://127.0.0.1:{port}/events"
+    finally:
+        await runner.cleanup()

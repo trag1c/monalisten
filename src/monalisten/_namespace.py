@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
-    from monalisten._errors import AuthIssue
+    from monalisten._auth import AuthResult, EventPayload
 
 E = TypeVar("E")
 L = TypeVar("L", bound=str)
@@ -32,8 +32,8 @@ HookWrapper: TypeAlias = "Callable[[Hook[P]], Hook[P]]"
 
 def build_registrar(name: str) -> HookWrapper[...]:
     @property
-    def prop(self: HookNamespace[Any, E]) -> Callable[[Hook[[E]]], Hook[[E]]]:
-        def wrapper(hook: Hook[[E]]) -> Hook[[E]]:
+    def prop(self: HookNamespace[Any, P]) -> Callable[[Hook[P]], Hook[P]]:
+        def wrapper(hook: Hook[P]) -> Hook[P]:
             self._paths[name].append(hook)  # pyright: ignore[reportPrivateUsage]
             return hook
 
@@ -42,7 +42,7 @@ def build_registrar(name: str) -> HookWrapper[...]:
     return cast("HookWrapper[...]", prop)
 
 
-class HookNamespace(Generic[L, E]):
+class HookNamespace(Generic[L, P]):
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         actions = [cast("L", entry) for entry in dir(cls) if not entry.startswith("_")]
@@ -54,23 +54,23 @@ class HookNamespace(Generic[L, E]):
         cls.__init__ = filling_init  # ty:ignore[invalid-assignment]
 
     def __init__(self) -> None:
-        self._paths: dict[L, list[Hook[[E]]]] = {}
-        self._event_hooks: list[Hook[[E]]] = []
+        self._paths: dict[L, list[Hook[P]]] = {}
+        self._event_hooks: list[Hook[P]] = []
 
-    def __call__(self, hook: Hook[[E]]) -> Hook[[E]]:
+    def __call__(self, hook: Hook[P]) -> Hook[P]:
         self._event_hooks.append(hook)
         return hook
 
-    def __getitem__(self, name: L | Literal["*"]) -> list[Hook[[E]]]:
+    def __getitem__(self, name: L | Literal["*"]) -> list[Hook[P]]:
         if name == "*":
             return self._event_hooks
         return self._paths[name]
 
 
 @final
-class InternalNamespace(HookNamespace[InternalEventName, object]):
+class InternalNamespace(HookNamespace[InternalEventName, ...]):
     ready: HookWrapper[[]] = build_registrar("ready")
-    auth_issue: HookWrapper[[AuthIssue]] = build_registrar("auth_issue")
+    auth_issue: HookWrapper[[EventPayload, AuthResult]] = build_registrar("auth_issue")
     error: HookWrapper[[Error]] = build_registrar("error")
 
     def __call__(self, _: object) -> NoReturn:  # ty:ignore[invalid-method-override]
