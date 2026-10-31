@@ -6,7 +6,7 @@
 Monalisten is a Python 3.11+ asynchronous library that helps you handle webhook
 events received from GitHub in an easy way. It is built on top of the amazing
 [`githubkit`][githubkit] library and can stream events without exposing any
-endpoints, either via [SSE] (with [`httpx-sse`][httpx-sse]) or by reading them
+endpoints, either via [SSE] (with [`httpx2`][httpx2]) or by reading them
 from a Redis stream (with [`redis`][redis-py]).
 
 - [Installation](#installation)
@@ -479,7 +479,7 @@ your LSP's autocomplete!
 
 [githubkit]: https://github.com/yanyongyu/githubkit
 [SSE]: https://en.wikipedia.org/wiki/Server-sent_events
-[httpx-sse]: https://github.com/florimondmanca/httpx-sse
+[httpx2]: https://github.com/pydantic/httpx2
 [redis-py]: https://github.com/redis/redis-py
 [smee.io]: https://smee.io/
 [gh-events]: https://docs.github.com/en/webhooks/webhook-events-and-payloads
