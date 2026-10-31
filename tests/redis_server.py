@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager, suppress
 from typing import TYPE_CHECKING, Any, final
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
 NIL = b"*-1\r\n"
 UNKNOWN = b"-ERR unknown command\r\n"
@@ -135,7 +135,7 @@ async def _handle(
 
 
 @asynccontextmanager
-async def run_fake_redis() -> AsyncIterator[tuple[FakeRedis, str]]:
+async def run_fake_redis() -> AsyncGenerator[tuple[FakeRedis, str]]:
     redis = FakeRedis()
 
     def on_connect(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:

@@ -51,6 +51,7 @@ class EventNamespace:
         self.installation_target = InstallationTargetNamespace()
         self.issue_comment = IssueCommentNamespace()
         self.issue_dependencies = IssueDependenciesNamespace()
+        self.issue_relates_to = IssueRelatesToNamespace()
         self.issues = IssuesNamespace()
         self.label = LabelNamespace()
         self.marketplace_purchase = MarketplacePurchaseNamespace()
@@ -254,6 +255,7 @@ DependabotAlertActions = Literal[
     "fixed",
     "reintroduced",
     "reopened",
+    "withdrawn",
 ]
 
 
@@ -280,6 +282,9 @@ class DependabotAlertNamespace(
     )
     reopened: HookWrapper[[events.DependabotAlertReopened]] = build_registrar(
         "reopened"
+    )
+    withdrawn: HookWrapper[[events.DependabotAlertWithdrawn]] = build_registrar(
+        "withdrawn"
     )
 
 
@@ -502,6 +507,21 @@ class IssueDependenciesNamespace(
     )
 
 
+IssueRelatesToActions = Literal["relates_to_added", "relates_to_removed"]
+
+
+@final
+class IssueRelatesToNamespace(
+    HookNamespace[IssueRelatesToActions, ["events.IssueRelatesTo"]]
+):
+    relates_to_added: HookWrapper[[events.IssueRelatesToAdded]] = build_registrar(
+        "relates_to_added"
+    )
+    relates_to_removed: HookWrapper[[events.IssueRelatesToRemoved]] = build_registrar(
+        "relates_to_removed"
+    )
+
+
 IssuesActions = Literal[
     "assigned",
     "closed",
@@ -556,14 +576,16 @@ class IssuesNamespace(HookNamespace[IssuesActions, ["events.Issues"]]):
     untyped: HookWrapper[[events.IssuesUntyped]] = build_registrar("untyped")
 
 
-LabelActions = Literal["created", "deleted", "edited"]
+LabelActions = Literal["archived", "created", "deleted", "edited", "unarchived"]
 
 
 @final
 class LabelNamespace(HookNamespace[LabelActions, ["events.Label"]]):
+    archived: HookWrapper[[events.LabelArchived]] = build_registrar("archived")
     created: HookWrapper[[events.LabelCreated]] = build_registrar("created")
     deleted: HookWrapper[[events.LabelDeleted]] = build_registrar("deleted")
     edited: HookWrapper[[events.LabelEdited]] = build_registrar("edited")
+    unarchived: HookWrapper[[events.LabelUnarchived]] = build_registrar("unarchived")
 
 
 MarketplacePurchaseActions = Literal[

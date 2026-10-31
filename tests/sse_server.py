@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 from aiohttp import web
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator
 
 QUEUE_KEY = web.AppKey("queue", asyncio.Queue)
 
@@ -64,7 +64,7 @@ class ServerQueue:
 
 
 @asynccontextmanager
-async def run_sse_server() -> AsyncIterator[tuple[ServerQueue, str]]:
+async def run_sse_server() -> AsyncGenerator[tuple[ServerQueue, str]]:
     app, runner, port = await start_test_server()
     try:
         yield ServerQueue(app[QUEUE_KEY]), f"http://127.0.0.1:{port}/events"
