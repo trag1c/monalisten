@@ -536,6 +536,7 @@ IssuesActions = Literal[
     "opened",
     "pinned",
     "reopened",
+    "status_changed",
     "transferred",
     "typed",
     "unassigned",
@@ -565,6 +566,9 @@ class IssuesNamespace(HookNamespace[IssuesActions, ["events.Issues"]]):
     opened: HookWrapper[[events.IssuesOpened]] = build_registrar("opened")
     pinned: HookWrapper[[events.IssuesPinned]] = build_registrar("pinned")
     reopened: HookWrapper[[events.IssuesReopened]] = build_registrar("reopened")
+    status_changed: HookWrapper[[events.IssuesStatusChanged]] = build_registrar(
+        "status_changed"
+    )
     transferred: HookWrapper[[events.IssuesTransferred]] = build_registrar(
         "transferred"
     )

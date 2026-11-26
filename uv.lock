@@ -382,27 +382,27 @@ wheels = [
 
 [[package]]
 name = "githubkit-schemas"
-version = "26.10.28"
+version = "26.11.19"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "githubkit" },
     { name = "githubkit-schemas-2026-03-10" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/5e/4ffe0407d2e7fdb52eea1f10c15a8cc81475b8ab45132dc7d294d6e5a8f9/githubkit_schemas-26.10.28.tar.gz", hash = "sha256:dc797fda250fd99966ace65a9a74f387c2c85f78f2a4641790a08ed47e5dec63", size = 136887, upload-time = "2026-10-28T17:30:05.975Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/7b/de6bb6baef77627e6424c6ab236b5d41be1be587bf68a6439b22f078f9e3/githubkit_schemas-26.11.19.tar.gz", hash = "sha256:8bf3bb6a372df9bd9a6d8af8378c8ef4a03a52ecab16c557a42f7c372d2cac12", size = 134316, upload-time = "2026-11-19T10:13:33.148Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/7d/6fa010c936b5fef7d5307b93b1faf881da57ecfdde24315979321ee37841/githubkit_schemas-26.10.28-py3-none-any.whl", hash = "sha256:e7105b07de703ca7ee2b6d95a6ab9e5c7ac1819a72f75649afdf9facb0a1a9c5", size = 139201, upload-time = "2026-10-28T17:29:55.629Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/23/fc889c6b0733b9424c42063d58da2f8116689d7a52125d7d28198a767042/githubkit_schemas-26.11.19-py3-none-any.whl", hash = "sha256:9d0630a2c18640b90477343422aaa737e703e82156dc9ca4c885e8341fd12281", size = 136851, upload-time = "2026-11-19T10:13:23.964Z" },
 ]
 
 [[package]]
 name = "githubkit-schemas-2026-03-10"
-version = "26.10.28"
+version = "26.11.19"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "githubkit-schemas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/88/c9/e6ab18c0178004f3a01939153b19d71bbd82eb403bb38b2375507de21f38/githubkit_schemas_2026_03_10-26.10.28.tar.gz", hash = "sha256:9783a704b90f22d1032ff848ff0d37979998ea281c1e98b699bae15c7869dc44", size = 1610533, upload-time = "2026-10-28T17:30:09.756Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/ec/2a2442d7b82512149ed14ed795fd3d10d36ced57f9feb99a291511a3f8bd/githubkit_schemas_2026_03_10-26.11.19.tar.gz", hash = "sha256:ab9c12a34006b330901d8d139cfcf2ea8827d3c5f018627b4f59cc248c0ddf0b", size = 1667259, upload-time = "2026-11-19T10:13:35.74Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/43/024ad46f7b5887e36c779db2c3c16f4564bc098588acc243f7018e716606/githubkit_schemas_2026_03_10-26.10.28-py3-none-any.whl", hash = "sha256:6a5b44a5b73bd0e31455388812ef0a62451c44ace5794b6d44d7237c703f11ac", size = 3739378, upload-time = "2026-10-28T17:29:59.638Z" },
+    { url = "https://files.pythonhosted.org/packages/38/9a/4b110fba6f67bd96cd411fb82fc9e86887ab329514e3c8cbc5ef39ab3c9a/githubkit_schemas_2026_03_10-26.11.19-py3-none-any.whl", hash = "sha256:328397e81806a0cde7c0e44e1a131ea5db67223635098afb71aff5024a1e3cb3", size = 3843449, upload-time = "2026-11-19T10:13:27.165Z" },
 ]
 
 [[package]]
@@ -525,7 +525,7 @@ wheels = [
 
 [[package]]
 name = "monalisten"
-version = "0.5.0"
+version = "0.5.1"
 source = { editable = "." }
 dependencies = [
     { name = "githubkit" },
@@ -556,7 +556,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "githubkit", specifier = ">=0.17.0" },
-    { name = "githubkit-schemas", specifier = ">=26.10.28" },
+    { name = "githubkit-schemas", specifier = ">=26.11.19" },
     { name = "httpx2", marker = "extra == 'sse'", specifier = ">=2.16.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=8.1.0" },
 ]
